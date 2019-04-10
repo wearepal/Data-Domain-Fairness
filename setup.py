@@ -1,7 +1,7 @@
 from distutils.core import setup
 
 setup(
-    name='Data-Domain-Fairness',
+    name='DataDomainFairness',
     version='0.1.0',
     author='N. Quadrianto, V. Sharmanska, O. Thomas',
     packages=['data-domain-fairness'],
