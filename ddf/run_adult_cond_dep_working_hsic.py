@@ -374,21 +374,21 @@ class Model:
     def __init__(self, features_size, protected_size, target_size, features_names, rff_map, rff_map_sens, to_deploy, code_size, 
                  encoder_hidden_sizes, decoder_hidden_sizes,
                  predictor_hidden_sizes,
-                 hsic_cost_weight, pred_cost_weight, dec_cost_weight, rff_samples, equalized_odds):
+                 hsic_cost_weight, pred_cost_weight, dec_cost_weight, rff_samples, equalized_odds, device):
         if not to_deploy:
             self.init_network(features_size, protected_size, target_size, features_names, code_size, 
                           encoder_hidden_sizes, decoder_hidden_sizes,
-                          predictor_hidden_sizes, to_deploy)
+                          predictor_hidden_sizes, to_deploy, device)
             self.init_training(hsic_cost_weight, pred_cost_weight, dec_cost_weight, rff_map, rff_map_sens, equalized_odds)
             self.init_logging(hsic_cost_weight, pred_cost_weight, dec_cost_weight )
         else:
             self.init_network(features_size, protected_size, target_size, features_names, code_size, 
                           encoder_hidden_sizes, decoder_hidden_sizes,
-                          predictor_hidden_sizes, to_deploy)
+                          predictor_hidden_sizes, to_deploy, device)
 
     def init_network(self, features_size, protected_size, target_size, features,
                     code_size, encoder_hidden_sizes, decoder_hidden_sizes,
-                    predictor_hidden_sizes, deploy):
+                    predictor_hidden_sizes, deploy, device):
 
         self.x = tf.placeholder(tf.float32, [None, features_size], name="x")
         self.s = tf.placeholder(tf.float32, [None, protected_size], name="s")
@@ -398,98 +398,99 @@ class Model:
         self.y_marg = tf.placeholder(tf.float32, [None, target_size], name="y_marg")
         self.keep_prob = tf.placeholder(tf.float32)
 
-        with tf.variable_scope('encoder'):
-            prev_layer = self.x
-            for size in encoder_hidden_sizes:
-                prev_layer = dense_bn_relu(prev_layer, size, deploy)
-            tmp = tf.layers.dense(
-                prev_layer, code_size, activation=None,
-                kernel_initializer=tf.uniform_unit_scaling_initializer(seed=888)) #dense_bn_relu(prev_layer, code_size)
-            self.encoded = tf.nn.dropout(tmp,keep_prob=self.keep_prob, seed=888)
+        with tf.device(device):
+            with tf.variable_scope('encoder'):
+                prev_layer = self.x
+                for size in encoder_hidden_sizes:
+                    prev_layer = dense_bn_relu(prev_layer, size, deploy)
+                tmp = tf.layers.dense(
+                    prev_layer, code_size, activation=None,
+                    kernel_initializer=tf.uniform_unit_scaling_initializer(seed=888)) #dense_bn_relu(prev_layer, code_size)
+                self.encoded = tf.nn.dropout(tmp,keep_prob=self.keep_prob, seed=888)
 
-        with tf.variable_scope('decoder'):    
-            prev_layer = self.encoded
-            for size in decoder_hidden_sizes:
-                prev_layer = dense_bn_relu(prev_layer, size, deploy)
-            # take into account the structure of our features
-            keys_f = features.keys()
-            ii = 0
-            for key_f in keys_f:
-                if sum(features[key_f])>0 and sum(features[key_f])==1:
-                    inc_unit = tf.layers.dense(
-                        prev_layer, sum(features[key_f]), activation=None,
-                        kernel_initializer=tf.uniform_unit_scaling_initializer(seed=888))
-                    if ii == 0:
-                        self.decoded = inc_unit
-                    else:
-                        self.decoded = tf.concat([self.decoded, inc_unit], axis=1) 
-                elif sum(features[key_f])>1:
-                    inc_unit = tf.layers.dense(
-                        prev_layer, sum(features[key_f]), activation=tf.nn.softmax,
-                        kernel_initializer=tf.uniform_unit_scaling_initializer(seed=888))
-                    if ii == 0:
-                        if deploy: #use one hot encoding at the deployment
-                            self.decoded = tf.one_hot(tf.argmax(inc_unit, dimension = 1), depth = sum(features[key_f])) 
-                        else: #might need to use soft outputs for learning
-                            self.decoded = inc_unit  #tf.one_hot(tf.argmax(inc_unit, dimension = 1), depth = sum(features[key_f])) 
-                    else:
-                        if deploy: #use one hot encoding at the deployment
-                            self.decoded = tf.concat([self.decoded, tf.one_hot(tf.argmax(inc_unit, dimension = 1), depth = sum(features[key_f]))], axis=1)   
-                        else: #might need to use soft outputs for learning
-                            self.decoded = tf.concat([self.decoded, inc_unit], axis=1)  #tf.concat([self.decoded, tf.one_hot(tf.argmax(inc_unit, dimension = 1), depth = sum(features[key_f]))], axis=1)   
-                ii += 1
+            with tf.variable_scope('decoder'):
+                prev_layer = self.encoded
+                for size in decoder_hidden_sizes:
+                    prev_layer = dense_bn_relu(prev_layer, size, deploy)
+                # take into account the structure of our features
+                keys_f = features.keys()
+                ii = 0
+                for key_f in keys_f:
+                    if sum(features[key_f])>0 and sum(features[key_f])==1:
+                        inc_unit = tf.layers.dense(
+                            prev_layer, sum(features[key_f]), activation=None,
+                            kernel_initializer=tf.uniform_unit_scaling_initializer(seed=888))
+                        if ii == 0:
+                            self.decoded = inc_unit
+                        else:
+                            self.decoded = tf.concat([self.decoded, inc_unit], axis=1)
+                    elif sum(features[key_f])>1:
+                        inc_unit = tf.layers.dense(
+                            prev_layer, sum(features[key_f]), activation=tf.nn.softmax,
+                            kernel_initializer=tf.uniform_unit_scaling_initializer(seed=888))
+                        if ii == 0:
+                            if deploy: #use one hot encoding at the deployment
+                                self.decoded = tf.one_hot(tf.argmax(inc_unit, dimension = 1), depth = sum(features[key_f]))
+                            else: #might need to use soft outputs for learning
+                                self.decoded = inc_unit  #tf.one_hot(tf.argmax(inc_unit, dimension = 1), depth = sum(features[key_f]))
+                        else:
+                            if deploy: #use one hot encoding at the deployment
+                                self.decoded = tf.concat([self.decoded, tf.one_hot(tf.argmax(inc_unit, dimension = 1), depth = sum(features[key_f]))], axis=1)
+                            else: #might need to use soft outputs for learning
+                                self.decoded = tf.concat([self.decoded, inc_unit], axis=1)  #tf.concat([self.decoded, tf.one_hot(tf.argmax(inc_unit, dimension = 1), depth = sum(features[key_f]))], axis=1)
+                    ii += 1
 
-        with tf.variable_scope('encoder',reuse=True):
-            prev_layer = self.x_marg
-            for size in encoder_hidden_sizes:
-                prev_layer = dense_bn_relu(prev_layer, size, deploy)
-            tmp = tf.layers.dense(
-                prev_layer, code_size, activation=None,
-                kernel_initializer=tf.uniform_unit_scaling_initializer(seed=888)) #dense_bn_relu(prev_layer, code_size)
-            self.encoded_marginal = tf.nn.dropout(tmp,keep_prob=self.keep_prob, seed=888)
+            with tf.variable_scope('encoder',reuse=True):
+                prev_layer = self.x_marg
+                for size in encoder_hidden_sizes:
+                    prev_layer = dense_bn_relu(prev_layer, size, deploy)
+                tmp = tf.layers.dense(
+                    prev_layer, code_size, activation=None,
+                    kernel_initializer=tf.uniform_unit_scaling_initializer(seed=888)) #dense_bn_relu(prev_layer, code_size)
+                self.encoded_marginal = tf.nn.dropout(tmp,keep_prob=self.keep_prob, seed=888)
 
-        with tf.variable_scope('decoder',reuse=True):    
-            prev_layer = self.encoded_marginal
-            for size in decoder_hidden_sizes:
-                prev_layer = dense_bn_relu(prev_layer, size, deploy)
-            # take into account the structure of our features
-            keys_f = features.keys()
-            ii = 0
-            for key_f in keys_f:
-                if sum(features[key_f])>0 and sum(features[key_f])==1:
-                    inc_unit = tf.layers.dense(
-                        prev_layer, sum(features[key_f]), activation=None,
-                        kernel_initializer=tf.uniform_unit_scaling_initializer(seed=888))
-                    if ii == 0:
-                        self.decoded_marginal = inc_unit
-                    else:
-                        self.decoded_marginal = tf.concat([self.decoded_marginal, inc_unit], axis=1) 
-                elif sum(features[key_f])>1:
-                    inc_unit = tf.layers.dense(
-                        prev_layer, sum(features[key_f]), activation=tf.nn.softmax,
-                        kernel_initializer=tf.uniform_unit_scaling_initializer(seed=888))
-                    if ii == 0:
-                        if deploy: #use one hot encoding at the deployment
-                            self.decoded_marginal = tf.one_hot(tf.argmax(inc_unit, dimension = 1), depth = sum(features[key_f])) 
-                        else: #might need to use soft outputs for learning
-                            self.decoded_marginal = inc_unit  #tf.one_hot(tf.argmax(inc_unit, dimension = 1), depth = sum(features[key_f])) 
-                    else:
-                        if deploy: #use one hot encoding at the deployment
-                            self.decoded_marginal = tf.concat([self.decoded_marginal, tf.one_hot(tf.argmax(inc_unit, dimension = 1), depth = sum(features[key_f]))], axis=1)   
-                        else: #might need to use soft outputs for learning
-                            self.decoded_marginal = tf.concat([self.decoded_marginal, inc_unit], axis=1)  #tf.concat([self.decoded_marginal, tf.one_hot(tf.argmax(inc_unit, dimension = 1), depth = sum(features[key_f]))], axis=1)   
-                ii += 1
+            with tf.variable_scope('decoder',reuse=True):
+                prev_layer = self.encoded_marginal
+                for size in decoder_hidden_sizes:
+                    prev_layer = dense_bn_relu(prev_layer, size, deploy)
+                # take into account the structure of our features
+                keys_f = features.keys()
+                ii = 0
+                for key_f in keys_f:
+                    if sum(features[key_f])>0 and sum(features[key_f])==1:
+                        inc_unit = tf.layers.dense(
+                            prev_layer, sum(features[key_f]), activation=None,
+                            kernel_initializer=tf.uniform_unit_scaling_initializer(seed=888))
+                        if ii == 0:
+                            self.decoded_marginal = inc_unit
+                        else:
+                            self.decoded_marginal = tf.concat([self.decoded_marginal, inc_unit], axis=1)
+                    elif sum(features[key_f])>1:
+                        inc_unit = tf.layers.dense(
+                            prev_layer, sum(features[key_f]), activation=tf.nn.softmax,
+                            kernel_initializer=tf.uniform_unit_scaling_initializer(seed=888))
+                        if ii == 0:
+                            if deploy: #use one hot encoding at the deployment
+                                self.decoded_marginal = tf.one_hot(tf.argmax(inc_unit, dimension = 1), depth = sum(features[key_f]))
+                            else: #might need to use soft outputs for learning
+                                self.decoded_marginal = inc_unit  #tf.one_hot(tf.argmax(inc_unit, dimension = 1), depth = sum(features[key_f]))
+                        else:
+                            if deploy: #use one hot encoding at the deployment
+                                self.decoded_marginal = tf.concat([self.decoded_marginal, tf.one_hot(tf.argmax(inc_unit, dimension = 1), depth = sum(features[key_f]))], axis=1)
+                            else: #might need to use soft outputs for learning
+                                self.decoded_marginal = tf.concat([self.decoded_marginal, inc_unit], axis=1)  #tf.concat([self.decoded_marginal, tf.one_hot(tf.argmax(inc_unit, dimension = 1), depth = sum(features[key_f]))], axis=1)
+                    ii += 1
 
-        with tf.variable_scope('predictor'):
-            prev_layer = self.decoded #TODO: self.x-self.decoded    if learning x^  # TODO: this was    self.encoded
-            for size in predictor_hidden_sizes:
-                prev_layer = dense_bn_relu(prev_layer, size, deploy)
-            self.y_logit = tf.layers.dense(
-                prev_layer, target_size, activation=None,
-                kernel_initializer=tf.uniform_unit_scaling_initializer(seed=888))
-            self.y_prob = tf.nn.sigmoid(self.y_logit)
-            self.y_pred = tf.cast(
-                tf.greater(self.y_prob, 0.5), tf.int32)
+            with tf.variable_scope('predictor'):
+                prev_layer = self.decoded #TODO: self.x-self.decoded    if learning x^  # TODO: this was    self.encoded
+                for size in predictor_hidden_sizes:
+                    prev_layer = dense_bn_relu(prev_layer, size, deploy)
+                self.y_logit = tf.layers.dense(
+                    prev_layer, target_size, activation=None,
+                    kernel_initializer=tf.uniform_unit_scaling_initializer(seed=888))
+                self.y_prob = tf.nn.sigmoid(self.y_logit)
+                self.y_pred = tf.cast(
+                    tf.greater(self.y_prob, 0.5), tf.int32)
 
     def init_training(self, hsic_cost_weight, pred_cost_weight, dec_cost_weight, 
         rff_map, rff_map_sens, equalized_odds):
@@ -671,13 +672,18 @@ class Model:
             decoded = model.decoded.eval({model.x: features, model.keep_prob: 1.0})
         return y_pred,y_prob,decoded
 
-def train(data_train,data_train_marginal,data_valid,data_valid_marginal,x_size,s_size,y_size,med_sq_dist,features,logs_dir_f, SEED_NUM, model_config, fit_config):
+def train(data_train,data_train_marginal,data_valid,data_valid_marginal,x_size,s_size,y_size,med_sq_dist,features,logs_dir_f, SEED_NUM, model_config, fit_config, device="cpu"):
     kernel_mapper = tf.contrib.kernel_methods.RandomFourierFeatureMapper(input_dim=x_size, output_dim=model_config['rff_samples'], stddev=med_sq_dist, seed=888, name='kernel_mapper')
     kernel_mapper_sens = tf.contrib.kernel_methods.RandomFourierFeatureMapper(input_dim=s_size, output_dim=model_config['rff_samples'], stddev=1.0, seed=888, name='kernel_mapper_sens')
 
+    if device == "cpu":
+        device = "/cpu:0"
+    else:
+        device = "/gpu:0"
+
     tf.reset_default_graph()
     with tf.Graph().as_default():
-        model = Model(features_size=x_size,protected_size=s_size,target_size=y_size, features_names=features, rff_map = kernel_mapper, rff_map_sens = kernel_mapper_sens, to_deploy=False, **model_config)
+        model = Model(features_size=x_size,protected_size=s_size,target_size=y_size, features_names=features, rff_map = kernel_mapper, rff_map_sens = kernel_mapper_sens, to_deploy=False, device=device, **model_config)
 
         tf_config = tf.ConfigProto()
         tf_config.gpu_options.allow_growth = True
@@ -687,17 +693,22 @@ def train(data_train,data_train_marginal,data_valid,data_valid_marginal,x_size,s
                   **fit_config)
     return True
 
-def test(data_train,data_valid,data_test,features,logs_dir_f, SEED_NUM, model_config):
+def test(data_train,data_valid,data_test,features,logs_dir_f, SEED_NUM, model_config, device="cpu"):
     # Computational graphs are associated with Sessions. 
     # We should "clear out" the state of the Session so we don't have multiple placeholder objects floating around 
     # as we call save and restore()
     tf.reset_default_graph()
 
+    if device == "cpu":
+        device = "/cpu:0"
+    else:
+        device = "/gpu:0"
+
     tf_config = tf.ConfigProto()
     tf_config.gpu_options.allow_growth = True
     kernel_mapper = None
     kernel_mapper_sens = None
-    model = Model(features_size=data_train[0].shape[1],protected_size=data_train[1].shape[1],target_size=data_train[2].shape[1], features_names=features, rff_map = kernel_mapper, rff_map_sens=kernel_mapper_sens, to_deploy=True,
+    model = Model(features_size=data_train[0].shape[1],protected_size=data_train[1].shape[1],target_size=data_train[2].shape[1], features_names=features, rff_map = kernel_mapper, rff_map_sens=kernel_mapper_sens, to_deploy=True, device=device,
                     **model_config)
 
     all_iterations = []
