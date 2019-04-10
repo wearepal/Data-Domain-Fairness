@@ -1,3 +1,4 @@
+import re
 
 import pandas as pd
 import tensorflow as tf
@@ -1000,6 +1001,13 @@ def delete_all_models(seed):
     if os.path.exists(models_dir):
         import shutil
         shutil.rmtree(models_dir)
+
+
+def delete_files(seed):
+    file_dir = '.'
+    for f in os.listdir(file_dir):
+        if re.search(f"seed_{seed}_*.csv", f):
+            os.remove(os.path.join(file_dir, f))
 
 
 if __name__ == '__main__':
