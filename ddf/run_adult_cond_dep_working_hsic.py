@@ -726,7 +726,7 @@ def test(data_train,data_valid,data_test,features,logs_dir_f, SEED_NUM, model_co
     acc_ = []
 
     #perform classification here with X and Xtilde
-    reg_array= [1., 5., 10., 50., 100.]
+    reg_array= [10**i for i in range(7)]
     #reg_array= [1., 5., 10., 50., 100., 500., 1000.]
     cv = cross_validation.StratifiedKFold(n_splits=10, random_state=888, shuffle=True)
     #with Xtilde
@@ -926,7 +926,7 @@ def test(data_train,data_valid,data_test,features,logs_dir_f, SEED_NUM, model_co
     cv_scores = np.zeros( (len(reg_array),10) )
     print("with X")
     for i, reg_const in enumerate(reg_array):
-        cv_scores[i]=cross_validation.cross_val_score(svm.LinearSVC(C=reg_const,dual=False, tol=1e-6, random_state=888), decoded_train, y_train.flatten(), cv=cv)
+        cv_scores[i]=cross_validation.cross_val_score(svm.LinearSVC(C=reg_const,dual=False, tol=1e-6, random_state=888), X_train, y_train.flatten(), cv=cv)
         #cv_scores[i]=cross_validation.cross_val_score(svm.LinearSVC(C=reg_const, tol=1e-8, random_state=0), X_train, y_train.flatten(), cv=cv)
     print("CV_Scores", cv_scores)
     cv_mean = np.mean(cv_scores, axis=1)
@@ -951,6 +951,7 @@ def test(data_train,data_valid,data_test,features,logs_dir_f, SEED_NUM, model_co
     print("TNR per sensitive value: %.2f, %.2f, (%.2f)" % (fpr_fnr_tpr_sensitive[3, 0] * 100., fpr_fnr_tpr_sensitive[3, 1] * 100., (fpr_fnr_tpr_sensitive[3, 0] - fpr_fnr_tpr_sensitive[3, 1]) * 100.))
     print("\n")
     #with Xtilde
+    cv_scores = np.zeros( (len(reg_array),10) )
     print ("with Xtilde")
     for i, reg_const in enumerate(reg_array):
         cv_scores[i]=cross_validation.cross_val_score(svm.LinearSVC(C=reg_const, dual=False, tol=1e-6, random_state=888), decoded_train, y_train.flatten(), cv=cv)
@@ -1053,7 +1054,7 @@ if __name__ == '__main__':
     y_size = data_train[2].shape[1]
     assert y_size == 1, "Target must be a single feature."
 
-    #sq_dist = pairwise_euclidean_distance(data_train)
+    sq_dist = pairwise_euclidean_distance(data_train)
     med_sq_dist = 1.4# np.median(sq_dist)/2.
     #print("median of sqrt pairwise distance", med_sq_dist)
 
