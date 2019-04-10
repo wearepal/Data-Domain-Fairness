@@ -887,8 +887,8 @@ def test(data_train,data_valid,data_test,features,logs_dir_f, SEED_NUM, model_co
         train_x_tilde_dataframe.columns = x_column_names
         train_tilde_dataframe = pd.concat([train_x_tilde_dataframe, train_s_dataframe, train_y_dataframe], axis=1)
 
-        train_dataframe.to_csv("stylingtrain_{}.csv".format(iteration), index=False)
-        train_tilde_dataframe.to_csv("stylingtraintilde_{}.csv".format(iteration), index=False)
+        train_dataframe.to_csv("seed_{}_stylingtrain_{}.csv".format(SEED_NUM, iteration), index=False)
+        train_tilde_dataframe.to_csv("seed_{}_stylingtraintilde_{}.csv".format(SEED_NUM, iteration), index=False)
 
         test_x_dataframe = pd.DataFrame(X_test)
         test_s_dataframe = pd.DataFrame(s_test, dtype='int32')
