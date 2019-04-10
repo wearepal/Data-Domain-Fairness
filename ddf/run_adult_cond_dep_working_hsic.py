@@ -86,86 +86,86 @@ def quadratic_time_HSIC(data_first, data_second, sigma_first, sigma_second):
     return hsic
 
 
-def centerKern(K, m):
-    e = tf.ones([m, 1])
-    K = K - tf.div((e @ tf.matmul(e, K, transpose_a=True)), m)
-    K = K - tf.div(tf.matmul((K @ e), e, transpose_b=True), m)
-    return K
+# def centerKern(K, m):
+#     e = tf.ones([m, 1])
+#     K = K - tf.div((e @ tf.matmul(e, K, transpose_a=True)), m)
+#     K = K - tf.div(tf.matmul((K @ e), e, transpose_b=True), m)
+#     return K
+#
+#
+# def computehvec(Ks, Ls, m):
+#     e = tf.ones([m,1])
+#
+#     t1 = tf.multiply(((m - 2) * (m - 2)), tf.multiply(Ks, Ls)) @ e
+#     t2 = (m - 2) * ((tf.reduce_sum(tf.multiply(Ks, Ls)) * e)
+#                     - (Ks @ (Ls @ e))
+#                     - (Ls @ (Ks @ e)))
+#
+#     t3 = m * tf.multiply((Ks @ e), (Ls @ e))
+#     t4 = tf.reduce_sum(Ls) * (Ks @ e)
+#     t5 = tf.reduce_sum(Ks) * (Ls @ e)
+#     t6 = (tf.matmul(e, Ks, transpose_a=True) @ (Ls @ e)) * e
+#
+#     h_xy = t1 + t2 - t3 + t4 + t5 - t6
+#
+#     return h_xy
 
 
-def computehvec(Ks, Ls, m):
-    e = tf.ones([m,1])
-
-    t1 = tf.multiply(((m - 2) * (m - 2)), tf.multiply(Ks, Ls)) @ e
-    t2 = (m - 2) * ((tf.reduce_sum(tf.multiply(Ks, Ls)) * e)
-                    - (Ks @ (Ls @ e))
-                    - (Ls @ (Ks @ e)))
-
-    t3 = m * tf.multiply((Ks @ e), (Ls @ e))
-    t4 = tf.reduce_sum(Ls) * (Ks @ e)
-    t5 = tf.reduce_sum(Ks) * (Ls @ e)
-    t6 = (tf.matmul(e, Ks, transpose_a=True) @ (Ls @ e)) * e
-
-    h_xy = t1 + t2 - t3 + t4 + t5 - t6
-
-    return h_xy
-
-
-def HSICunbiased(k_centered_0_diag, l_centered_0_diag, m):
-    e = tf.ones([m, 1])
-
-    Ks = centerKern(k_centered_0_diag, m)
-    Ls = centerKern(l_centered_0_diag, m)
-
-    k_centered_0_diag = k_centered_0_diag - tf.diag(tf.diag_part(Ks))
-    l_centered_0_diag = l_centered_0_diag - tf.diag(tf.diag_part(Ls))
-
-    t1 = tf.reduce_sum(tf.multiply(k_centered_0_diag, l_centered_0_diag))
-    t2 = tf.div(tf.multiply(tf.reduce_sum(k_centered_0_diag),
-                            tf.reduce_sum(l_centered_0_diag)),
-                ((m - 1) * (m - 2)))
-    t3 = ((tf.matmul(e, k_centered_0_diag, transpose_a=True) @ (l_centered_0_diag @ e)) * 2) / (m - 2)
-    return (t1 + t2 - t3) / (m * (m - 3))
+# def HSICunbiased(k_centered_0_diag, l_centered_0_diag, m):
+#     e = tf.ones([m, 1])
+#
+#     Ks = centerKern(k_centered_0_diag, m)
+#     Ls = centerKern(l_centered_0_diag, m)
+#
+#     k_centered_0_diag = k_centered_0_diag - tf.diag(tf.diag_part(Ks))
+#     l_centered_0_diag = l_centered_0_diag - tf.diag(tf.diag_part(Ls))
+#
+#     t1 = tf.reduce_sum(tf.multiply(k_centered_0_diag, l_centered_0_diag))
+#     t2 = tf.div(tf.multiply(tf.reduce_sum(k_centered_0_diag),
+#                             tf.reduce_sum(l_centered_0_diag)),
+#                 ((m - 1) * (m - 2)))
+#     t3 = ((tf.matmul(e, k_centered_0_diag, transpose_a=True) @ (l_centered_0_diag @ e)) * 2) / (m - 2)
+#     return (t1 + t2 - t3) / (m * (m - 3))
 
 
-def quadratic_time_unbiased_HSIC(data_first, data_second, sigma_first, sigma_second):
-    XX = tf.matmul(data_first, data_first, transpose_b=True)
-    YY = tf.matmul(data_second, data_second, transpose_b=True)
-
-    X_sqnorms = tf.diag_part(XX)
-    Y_sqnorms = tf.diag_part(YY)
-
-    r = lambda x: tf.expand_dims(x, 0)
-    c = lambda x: tf.expand_dims(x, 1)
-
-    gamma_first = 1.  # 1. / (2 * sigma_first**2) TODO
-    gamma_second = 0.5  # 1. / (2 * sigma_second**2) TODO
-    # use the second binomial formula
-    Kernel_XX = tf.exp(-gamma_first * (-2 * XX + c(X_sqnorms) + r(X_sqnorms)))
-    Kernel_YY = tf.exp(-gamma_second * (-2 * YY + c(Y_sqnorms) + r(Y_sqnorms)))
-
-    # Kernel_XX = XX
-    # Kernel_YY = YY
-    to_get_m = tf.matmul(data_second, data_second, transpose_b=True)
-    m = tf.cast(tf.shape(to_get_m)[0], tf.float32)
-
-    constant = (1 / (4 * m)) * (1 / ((m - 1) * (m - 2) * (m - 3)) ** 2)
-
-    K = centerKern(Kernel_XX, m)
-    L = centerKern(Kernel_YY, m)
-
-    Ks = K - tf.diag(tf.diag_part(K))
-    Ls = L - tf.diag(tf.diag_part(L))
-
-    h_xy = computehvec(Ks, Ls, m)
-
-    R_xyxz = constant * tf.matmul(h_xy, h_xy, transpose_a=True)
-
-    HSIC_xy = HSICunbiased(K, L, m)
-
-    thecovariance = (16 / m) * (R_xyxz - (HSIC_xy * HSIC_xy))
-
-    return tf.reshape((HSIC_xy / thecovariance), [])
+# def quadratic_time_unbiased_HSIC(data_first, data_second, sigma_first, sigma_second):
+#     XX = tf.matmul(data_first, data_first, transpose_b=True)
+#     YY = tf.matmul(data_second, data_second, transpose_b=True)
+#
+#     X_sqnorms = tf.diag_part(XX)
+#     Y_sqnorms = tf.diag_part(YY)
+#
+#     r = lambda x: tf.expand_dims(x, 0)
+#     c = lambda x: tf.expand_dims(x, 1)
+#
+#     gamma_first = 1.  # 1. / (2 * sigma_first**2) TODO
+#     gamma_second = 0.5  # 1. / (2 * sigma_second**2) TODO
+#     # use the second binomial formula
+#     Kernel_XX = tf.exp(-gamma_first * (-2 * XX + c(X_sqnorms) + r(X_sqnorms)))
+#     Kernel_YY = tf.exp(-gamma_second * (-2 * YY + c(Y_sqnorms) + r(Y_sqnorms)))
+#
+#     # Kernel_XX = XX
+#     # Kernel_YY = YY
+#     to_get_m = tf.matmul(data_second, data_second, transpose_b=True)
+#     m = tf.cast(tf.shape(to_get_m)[0], tf.float32)
+#
+#     constant = (1 / (4 * m)) * (1 / ((m - 1) * (m - 2) * (m - 3)) ** 2)
+#
+#     K = centerKern(Kernel_XX, m)
+#     L = centerKern(Kernel_YY, m)
+#
+#     Ks = K - tf.diag(tf.diag_part(K))
+#     Ls = L - tf.diag(tf.diag_part(L))
+#
+#     h_xy = computehvec(Ks, Ls, m)
+#
+#     R_xyxz = constant * tf.matmul(h_xy, h_xy, transpose_a=True)
+#
+#     HSIC_xy = HSICunbiased(K, L, m)
+#
+#     thecovariance = (16 / m) * (R_xyxz - (HSIC_xy * HSIC_xy))
+#
+#     return tf.reshape((HSIC_xy / thecovariance), [])
 
 
 def quadratic_time_MMD(data_first, data_second, data_third, data_fourth, sigma, 
@@ -537,7 +537,7 @@ class Model:
             #s_pos = tf.gather_nd(self.s, tf.where(mask))
 
 
-            self.cycling_cost = -quadratic_time_unbiased_HSIC(x_map_pos-decoded_map_pos, # TODO: decoded_map_pos,   if learning x^
+            self.cycling_cost = -quadratic_time_HSIC(x_map_pos-decoded_map_pos, # TODO: decoded_map_pos,   if learning x^
                          sens_map_pos,1.0e1,0.2)
                         #-quadratic_time_MMD(x_map_pos-decoded_map_pos,
                         #sens_map_pos,x_marginal_map_pos-decoded_marginal_map_pos,
@@ -545,8 +545,8 @@ class Model:
                         #(x_map, tf.concat([decoded_map,sens_map],axis=1), 1.0)
 
             # TODO: Added below cost as per VS on slack TODO TODO TODO meant to be dcoded_map_pos and sens_map_pos
-            self.hsic_cost = quadratic_time_unbiased_HSIC(decoded_map_pos, sens_map_pos, 1.0e1, 0.2)
-            # self.hsic_cost_biased = quadratic_time_HSIC(decoded_map_pos, sens_map_pos, 1.0e1, 0.2)
+            # self.hsic_cost = quadratic_time_unbiased_HSIC(decoded_map_pos, sens_map_pos, 1.0e1, 0.2)
+            self.hsic_cost = quadratic_time_HSIC(decoded_map_pos, sens_map_pos, 1.0e1, 0.2)
             #self.hsic_cost = tf.abs(quadratic_time_HSIC(x_dec_pos, s_pos, 1.0e1, 0.2))
 
         self.pred_loss = (hsic_cost_weight * self.cycling_cost +
