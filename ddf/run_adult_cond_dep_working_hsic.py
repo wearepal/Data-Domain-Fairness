@@ -599,15 +599,15 @@ class Model:
     def init_logging(self, hsic_cost_weight, pred_cost_weight, dec_cost_weight):
         # which variables to log
         tf.summary.scalar("decoder_loss", self.decoder_loss)
-        tf.summary.scalar("decoder_loss with weight", dec_cost_weight*self.decoder_loss)
+        tf.summary.scalar("decoder_loss_with_weight", dec_cost_weight*self.decoder_loss)
         tf.summary.scalar("pred_loss", self.pred_loss)
         tf.summary.scalar("y_cost", self.y_cost)
-        tf.summary.scalar("y_cost with weight", pred_cost_weight*self.y_cost)
+        tf.summary.scalar("y_cost_with_weight", pred_cost_weight*self.y_cost)
         tf.summary.scalar("cycling_cost", self.cycling_cost)
-        tf.summary.scalar("cycling_cost with weight", hsic_cost_weight*self.cycling_cost)
+        tf.summary.scalar("cycling_cost_with_weight", hsic_cost_weight*self.cycling_cost)
         tf.summary.scalar("hsic_cost", self.hsic_cost) #TODO: added
         # tf.summary.scalar("hsic_cost_biased", self.hsic_cost_biased) #TODO: added
-        tf.summary.scalar("hsic_cost with weight", hsic_cost_weight*self.hsic_cost) #TODO: added
+        tf.summary.scalar("hsic_cost_with_weight", hsic_cost_weight*self.hsic_cost) #TODO: added
                 
         self.summary_op = tf.summary.merge_all()
 
