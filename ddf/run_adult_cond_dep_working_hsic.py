@@ -671,23 +671,23 @@ class Model:
             decoded = model.decoded.eval({model.x: features, model.keep_prob: 1.0})
         return y_pred,y_prob,decoded
 
-def train(data_train,data_train_marginal,data_valid,data_valid_marginal,x_size,s_size,y_size,med_sq_dist,features,logs_dir_f, SEED_NUM):
-    kernel_mapper = tf.contrib.kernel_methods.RandomFourierFeatureMapper(input_dim=x_size, output_dim=MODEL_CONFIG['rff_samples'], stddev=med_sq_dist, seed=888, name='kernel_mapper')
-    kernel_mapper_sens = tf.contrib.kernel_methods.RandomFourierFeatureMapper(input_dim=s_size, output_dim=MODEL_CONFIG['rff_samples'], stddev=1.0, seed=888, name='kernel_mapper_sens')
+def train(data_train,data_train_marginal,data_valid,data_valid_marginal,x_size,s_size,y_size,med_sq_dist,features,logs_dir_f, SEED_NUM, model_config, fit_config):
+    kernel_mapper = tf.contrib.kernel_methods.RandomFourierFeatureMapper(input_dim=x_size, output_dim=model_config['rff_samples'], stddev=med_sq_dist, seed=888, name='kernel_mapper')
+    kernel_mapper_sens = tf.contrib.kernel_methods.RandomFourierFeatureMapper(input_dim=s_size, output_dim=model_config['rff_samples'], stddev=1.0, seed=888, name='kernel_mapper_sens')
 
     tf.reset_default_graph()
     with tf.Graph().as_default():
-        model = Model(features_size=x_size,protected_size=s_size,target_size=y_size, features_names=features, rff_map = kernel_mapper, rff_map_sens = kernel_mapper_sens, to_deploy=False, **MODEL_CONFIG)
+        model = Model(features_size=x_size,protected_size=s_size,target_size=y_size, features_names=features, rff_map = kernel_mapper, rff_map_sens = kernel_mapper_sens, to_deploy=False, **model_config)
 
         tf_config = tf.ConfigProto()
         tf_config.gpu_options.allow_growth = True
 
         model.fit(data_train, data_train_marginal, data_valid, data_valid_marginal, SEED_NUM,
                   tf_config=tf_config, verbose=True, logs_dir=logs_dir_f, 
-                  **FIT_CONFIG)  
+                  **fit_config)
     return True
 
-def test(data_train,data_valid,data_test,features,logs_dir_f, SEED_NUM):
+def test(data_train,data_valid,data_test,features,logs_dir_f, SEED_NUM, model_config):
     # Computational graphs are associated with Sessions. 
     # We should "clear out" the state of the Session so we don't have multiple placeholder objects floating around 
     # as we call save and restore()
@@ -698,7 +698,7 @@ def test(data_train,data_valid,data_test,features,logs_dir_f, SEED_NUM):
     kernel_mapper = None
     kernel_mapper_sens = None
     model = Model(features_size=data_train[0].shape[1],protected_size=data_train[1].shape[1],target_size=data_train[2].shape[1], features_names=features, rff_map = kernel_mapper, rff_map_sens=kernel_mapper_sens, to_deploy=True,
-                    **MODEL_CONFIG)
+                    **model_config)
 
     all_iterations = []
     for file in os.listdir(logs_dir_f + '/models_{}/'.format(SEED_NUM)):
