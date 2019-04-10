@@ -732,7 +732,7 @@ def test(data_train,data_valid,data_test,features,logs_dir_f, SEED_NUM):
     tf_config.gpu_options.allow_growth = True
     kernel_mapper = None
     kernel_mapper_sens = None
-    model = Model(features_size=x_size,protected_size=s_size,target_size=y_size, features_names=features, rff_map = kernel_mapper, rff_map_sens=kernel_mapper_sens, to_deploy=True,
+    model = Model(features_size=data_train[0].shape[1],protected_size=data_train[1].shape[1],target_size=data_train[2].shape[1], features_names=features, rff_map = kernel_mapper, rff_map_sens=kernel_mapper_sens, to_deploy=True,
                     **MODEL_CONFIG)
 
     all_iterations = []
