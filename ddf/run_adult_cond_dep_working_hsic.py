@@ -1,13 +1,17 @@
-from datasets import load_dataset
+
 import pandas as pd
 import tensorflow as tf
 import os.path
 import fnmatch
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
-from sklearn import svm, cross_validation
+from sklearn import svm
+from sklearn import model_selection as cross_validation
 import sys
 import os
+
+from ddf.datasets import load_dataset
+
 os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"   # see issue #152
 os.environ["CUDA_VISIBLE_DEVICES"]=""
 
