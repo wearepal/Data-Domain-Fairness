@@ -1016,8 +1016,8 @@ def test(data_train,data_valid,data_test,features,logs_dir_f, SEED_NUM):
     return True
 
 
-def delete_all_models():
-    models_dir = './models_{}/'.format(SEED_NUM)
+def delete_all_models(seed):
+    models_dir = './models_{}/'.format(seed)
     if os.path.exists(models_dir):
         import shutil
         shutil.rmtree("dir-you-want-to-remove")
