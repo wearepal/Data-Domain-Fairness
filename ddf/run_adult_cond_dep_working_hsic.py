@@ -15,42 +15,7 @@ from ddf.datasets import load_dataset
 # os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"   # see issue #152
 # os.environ["CUDA_VISIBLE_DEVICES"]=""
 #
-# DATASET_CONFIG = dict(
-#     train_path="data/preprocessed/adult/train.csv",
-#     test_path="data/preprocessed/adult/test.csv",
-#     data_name='adult',
-#     validation_size=2000,
-#     remake_test=True,
-#     test_size=15000
-# )
 #
-# MODEL_CONFIG = dict(
-#     code_size=40,
-#     encoder_hidden_sizes=[40],
-#     decoder_hidden_sizes=[40],
-#     predictor_hidden_sizes=[],
-#     hsic_cost_weight=10., # TODO: 20.
-#     pred_cost_weight=1.,
-#     dec_cost_weight=1.0e-4,
-#     rff_samples=2000,
-#     equalized_odds=False
-# )
-#
-# FIT_CONFIG = dict(
-#     n_iterations=1000, # TODO: 50k
-#     batch_size=2000,
-#     model_save_iterations=5, #TODO: 10k
-#     report_iterations=100,
-#     pred_steps_per_iteration=1,
-#     init_random_seed=888
-# )
-#
-# RANDOM_SEEDS = [87656123, 741246123, 292461935, 502217591, 9327935, 2147631, 2010588, 5171154, 6624906, 5136170]
-#
-# FEATURE_SPLITS = ['sex_salary']#'sex-race_salary']
-#
-# s_scaler = None
-# i_scaler = MinMaxScaler
 
 ###############################################################################
 def get_median(v):
@@ -277,7 +242,7 @@ def quadratic_time_MMD(data_first, data_second, data_third, data_fourth, sigma,
           - 2 * tf.reduce_sum(Kernel_12) / (m * n))
     return 4.0*mmd2
 
-def make_marginal_data(*arrays, random_seed=523423):
+def make_marginal_data(*arrays, random_seed=523423, model_config):
     #X is conditional independence of S given Y
     #X,S,Y; permute the S according to the Y 
 
@@ -290,7 +255,7 @@ def make_marginal_data(*arrays, random_seed=523423):
         res.append(arr[rperm,])
 
     #now, permute according to the conditional independency
-    if MODEL_CONFIG['equalized_odds']:
+    if model_config['equalized_odds']:
         #equalized odds
         df = pd.DataFrame(res[1])
         df = df.groupby(res[2].flatten(), group_keys=False).transform(np.random.permutation)
@@ -1026,6 +991,45 @@ def delete_all_models(seed):
 if __name__ == '__main__':
     print(sys.argv[1])
     SEED_NUM = int(sys.argv[1])
+
+    DATASET_CONFIG = dict(
+        train_path="data/preprocessed/adult/train.csv",
+        test_path="data/preprocessed/adult/test.csv",
+        data_name='adult',
+        validation_size=2000,
+        remake_test=True,
+        test_size=15000
+    )
+
+    MODEL_CONFIG = dict(
+        code_size=40,
+        encoder_hidden_sizes=[40],
+        decoder_hidden_sizes=[40],
+        predictor_hidden_sizes=[],
+        hsic_cost_weight=10., # TODO: 20.
+        pred_cost_weight=1.,
+        dec_cost_weight=1.0e-4,
+        rff_samples=2000,
+        equalized_odds=False
+    )
+
+    FIT_CONFIG = dict(
+        n_iterations=1000, # TODO: 50k
+        batch_size=2000,
+        model_save_iterations=5, #TODO: 10k
+        report_iterations=100,
+        pred_steps_per_iteration=1,
+        init_random_seed=888
+    )
+
+    RANDOM_SEEDS = [87656123, 741246123, 292461935, 502217591, 9327935, 2147631, 2010588, 5171154, 6624906, 5136170]
+
+    FEATURE_SPLITS = ['sex_salary']#'sex-race_salary']
+
+    s_scaler = None
+    i_scaler = MinMaxScaler
+
+
     data_train, data_valid, data_test, features = load_dataset(
             random_state=RANDOM_SEEDS[SEED_NUM], feature_split=FEATURE_SPLITS[0],
             input_scaler=i_scaler,
