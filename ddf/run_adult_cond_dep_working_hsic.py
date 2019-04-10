@@ -720,6 +720,8 @@ def test(data_train,data_valid,data_test,features,logs_dir_f, SEED_NUM, model_co
     cv = cross_validation.StratifiedKFold(n_splits=10, random_state=888, shuffle=True)
     #with Xtilde
     print("with Xtilde for all iterations")
+    decoded_train = None
+    decoded_test = None
     for iteration in all_iterations[-1:]:
         y_pred_train, y_prob_train, decoded_train = model.predict(model,X_train,logs_dir_f,tf_config,iteration, SEED_NUM)
         #decoded_train = X_train - decoded_train #TODO: added as now learn x^, not x~
