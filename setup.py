@@ -4,7 +4,7 @@ setup(
     name='DataDomainFairness',
     version='0.1.0',
     author='N. Quadrianto, V. Sharmanska, O. Thomas',
-    packages=['data-domain-fairness'],
+    packages=['ddf'],
     description='Model for learning fair representations in the data domain',
     python_requires=">=3.6",
     install_requires=[
