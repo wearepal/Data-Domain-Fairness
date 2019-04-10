@@ -1016,6 +1016,14 @@ def test(data_train,data_valid,data_test,features,logs_dir_f, SEED_NUM):
     return True
 
 
+def delete_all_models():
+    models_dir = './models_{}/'.format(SEED_NUM)
+    if os.path.exists(models_dir):
+        import shutil
+        shutil.rmtree("dir-you-want-to-remove")
+        os.makedirs(models_dir)
+
+
 if __name__ == '__main__':
     print(sys.argv[1])
     SEED_NUM = int(sys.argv[1])
