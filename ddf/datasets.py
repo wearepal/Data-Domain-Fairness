@@ -1,7 +1,6 @@
 import numpy as np
 import pandas as pd
-from sklearn.preprocessing import StandardScaler, MinMaxScaler
-import pdb
+from sklearn.preprocessing import StandardScaler
 import re
 from collections import OrderedDict
 def _filter_features_by_prefixes(df, prefixes):
@@ -78,14 +77,10 @@ def _split_feature_names(df, data_name, feature_split):
 
 
 def _split_features(df, data_name, feature_split):
-
-    # TODO: I've added this line to make so only dealing with white and black
-    # df = df.query('race_Black' != 'race_White')
-
     x_features, s_features, y_features = _split_feature_names(
         df, data_name, feature_split)
 
-    #allowing to go back from one hot encoded features to categorical features
+    # allowing to go back from one hot encoded features to categorical features
     if data_name=="adult":
         SORTED_FEATURES_NAMES = [
                 'age',
@@ -108,7 +103,7 @@ def _split_features(df, data_name, feature_split):
     for i in range(len(SORTED_FEATURES_NAMES)):
         features[SORTED_FEATURES_NAMES[i]] = [not re.match(SORTED_FEATURES_NAMES[i],values)==None for values in x_features]
 
-    #fixing the education to not count education-num
+    # fixing the education to not count education-num
     features['education'][1] = False
     x = df[x_features].values.astype(float)
     s = df[s_features].values.astype(float)
@@ -122,9 +117,6 @@ def scale(scaler_class, train, valid, test):
         return [train, valid, test]
 
     scaler = scaler_class()
-    #train_scaled = scaler.fit_transform(train)
-    #valid_scaled = scaler.fit_transform(valid)
-    #test_scaled = scaler.fit_transform(test)
     scalerobj = scaler.fit(np.concatenate((np.concatenate((train,valid),axis=0),test),axis=0))
     train_scaled = scalerobj.transform(train)
     valid_scaled = scalerobj.transform(valid)
