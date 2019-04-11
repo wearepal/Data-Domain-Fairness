@@ -513,11 +513,13 @@ class Model:
 
         if equalized_odds:
             #EQUALIZED ODDS
+            print("Equalized Odds Criterion")
             self.cycling_cost = -quadratic_time_MMD(x_map-decoded_map,
                         sens_map,x_marginal_map-decoded_marginal_map,
                         sens_marginal_map,0.2,self.y,self.y_marg) 
         else:
             #EQUALITY of OPPORTUNITY
+            print("Equal Opportunity Criterion")
             mask = tf.equal(tf.squeeze(self.y), 1) # TODO: I think this is where we want to look at y = 0 - changed from 1
             #mask = tf.logical_and(
             #    tf.equal(tf.squeeze(self.y), 1),
@@ -532,14 +534,14 @@ class Model:
             decoded_marginal_map_pos = tf.gather_nd(decoded_marginal_map, tf.where(mask))
             sens_map_pos = tf.gather_nd(sens_map, tf.where(mask))
             sens_marginal_map_pos = tf.gather_nd(sens_marginal_map, tf.where(mask))
-            self.s_pos_map = sens_map_pos
+            # self.s_pos_map = sens_map_pos
 
             #x_dec_pos = tf.gather_nd(self.decoded, tf.where(mask))
             #s_pos = tf.gather_nd(self.s, tf.where(mask))
 
 
-            self.cycling_cost = -quadratic_time_HSIC(x_map_pos-decoded_map_pos, # TODO: decoded_map_pos,   if learning x^
-                         sens_map_pos,1.0e1,0.2)
+            self.cycling_cost = -(quadratic_time_HSIC(x_map_pos-decoded_map_pos, # TODO: decoded_map_pos,   if learning x^
+                         sens_map_pos,1.0e1,0.2)**2)
                         #-quadratic_time_MMD(x_map_pos-decoded_map_pos,
                         #sens_map_pos,x_marginal_map_pos-decoded_marginal_map_pos,
                         #sens_marginal_map_pos,0.2) 
@@ -547,7 +549,7 @@ class Model:
 
             # TODO: Added below cost as per VS on slack TODO TODO TODO meant to be dcoded_map_pos and sens_map_pos
             # self.hsic_cost = quadratic_time_unbiased_HSIC(decoded_map_pos, sens_map_pos, 1.0e1, 0.2)
-            self.hsic_cost = quadratic_time_HSIC(decoded_map_pos, sens_map_pos, 1.0e1, 0.2)
+            self.hsic_cost = quadratic_time_HSIC(decoded_map_pos, sens_map_pos, 1.0e1, 0.2)**2
             #self.hsic_cost = tf.abs(quadratic_time_HSIC(x_dec_pos, s_pos, 1.0e1, 0.2))
 
         self.pred_loss = (hsic_cost_weight * self.cycling_cost +
@@ -1006,7 +1008,7 @@ def delete_all_models(seed):
 def delete_files(seed):
     file_dir = '.'
     for f in os.listdir(file_dir):
-        if re.search(f"seed_{seed}_*.csv", f):
+        if re.search(r".*\.csv", f):
             os.remove(os.path.join(file_dir, f))
 
 
