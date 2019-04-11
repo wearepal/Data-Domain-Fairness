@@ -1004,8 +1004,8 @@ if __name__ == '__main__':
     assert y_size == 1, "Target must be a single feature."
 
     sq_dist = pairwise_euclidean_distance(data_train)
-    med_sq_dist = 1.4  # np.median(sq_dist)/2.
-    # print("median of sqrt pairwise distance", med_sq_dist)
+    med_sq_dist = np.median(sq_dist)/2.
+    print("median of sqrt pairwise distance", med_sq_dist)
 
     logs_dir_f = "."
 
