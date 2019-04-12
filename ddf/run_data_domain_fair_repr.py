@@ -60,8 +60,8 @@ def quadratic_time_HSIC(data_first, data_second, sigma_first, sigma_second):
     r = lambda x: tf.expand_dims(x, 0)
     c = lambda x: tf.expand_dims(x, 1)
 
-    gamma_first = 1.  # 1. / (2 * sigma_first**2) TODO
-    gamma_second = 0.5  # 1. / (2 * sigma_second**2) TODO
+    gamma_first = 1. / (2 * sigma_first**2)
+    gamma_second = 1. / (2 * sigma_second**2)
     # use the second binomial formula
     Kernel_XX = tf.exp(-gamma_first * (-2 * XX + c(X_sqnorms) + r(X_sqnorms)))
     Kernel_YY = tf.exp(-gamma_second * (-2 * YY + c(Y_sqnorms) + r(Y_sqnorms)))
@@ -447,9 +447,9 @@ class Model:
             sens_map_pos = tf.gather_nd(sens_map, tf.where(mask))
             sens_marginal_map_pos = tf.gather_nd(sens_marginal_map, tf.where(mask))
 
-            self.cycling_cost = -(quadratic_time_HSIC(x_map_pos - decoded_map_pos, sens_map_pos, 1.0e1, 0.2))
+            self.cycling_cost = -(quadratic_time_HSIC(x_map_pos - decoded_map_pos, sens_map_pos, tf.sqrt(tf.constant([0.5])), tf.constant([1.])))
 
-            self.hsic_cost = quadratic_time_HSIC(decoded_map_pos, sens_map_pos, 1.0e1, 0.2)
+            self.hsic_cost = quadratic_time_HSIC(decoded_map_pos, sens_map_pos, tf.sqrt(tf.constant([0.5])), tf.constant([1.]))
 
         self.pred_loss = (hsic_cost_weight * self.cycling_cost +
                           (hsic_cost_weight * self.hsic_cost) +
