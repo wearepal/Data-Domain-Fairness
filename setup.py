@@ -11,6 +11,6 @@ setup(
         "numpy >= 1.14.2",
         "pandas >= 0.22.0",
         "scikit_learn >= 0.20.1",
-        "tensorflow < 2.0"
+        "tensorflow == 2.0.1"
     ],
 )
