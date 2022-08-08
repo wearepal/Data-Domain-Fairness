@@ -22,7 +22,7 @@ torch.multiprocessing.set_sharing_strategy("file_system")
 if __name__ == "__main__":
     data_ops: list[Option] = [
         Option(ColoredMNISTDataModule, name="cmnist_base"),
-        # Option(CelebADataModule, name="celeba"),
+        Option(CelebADataModule, name="celeba_base"),
     ]
 
     model_ops: list[Option] = [

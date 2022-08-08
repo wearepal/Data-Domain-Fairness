@@ -1,5 +1,5 @@
 defaults:
-  - /schema/data: celeba
+  - /schema/data: celeba_base
   - defaults
 train_batch_size: 32
 eval_batch_size: null
