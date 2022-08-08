@@ -1,0 +1,26 @@
+defaults:
+  - /schema/data: cmnist_base
+train_batch_size: 64
+eval_batch_size: null
+val_prop: 0.2
+test_prop: 0.2
+num_workers: 1
+seed: ${seed}
+persist_workers: false
+pin_memory: true
+stratified_sampling: false
+instance_weighting: false
+training_mode: epoch
+train_transforms: null
+test_transforms: null
+image_size: 32
+use_predefined_splits: true
+label_map: null
+colors: null
+num_colors: 3
+scale: 0.0
+correlation: 0.0
+binarize: false
+greyscale: false
+background: false
+black: true

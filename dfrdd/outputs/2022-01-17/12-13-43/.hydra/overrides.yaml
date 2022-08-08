@@ -1,0 +1,3 @@
+- data=celeba
+- data.root=/Users/ot44/Data
+- log_offline=true

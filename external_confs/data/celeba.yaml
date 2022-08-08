@@ -1,0 +1,20 @@
+defaults:
+  - /schema/data: celeba
+  - defaults
+train_batch_size: 32
+eval_batch_size: null
+val_prop: 0.2
+test_prop: 0.2
+num_workers: 0
+seed: ${seed}
+persist_workers: false
+pin_memory: true
+stratified_sampling: false
+instance_weighting: false
+training_mode: epoch
+train_transforms: null
+test_transforms: null
+image_size: 64
+superclass: Smiling
+subclass: Male
+use_predefined_splits: true
