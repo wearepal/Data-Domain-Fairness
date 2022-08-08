@@ -33,10 +33,9 @@ import pytorch_lightning as pl
 class Frdd(BaseAE):
     def _build(self):
         self.pred_loss_fn = nn.CrossEntropyLoss()
-        self.output_layers["pool5"] = 36
         self.tv_loss = TotalVariation()
         self.fc_layer = nn.Linear(
-            self.vgg.model.classifier[0].in_features, self.num_classes
+            self.vgg.model.classifier[0].in_features, self.card_y
         )
 
     def build(self, datamodule: CdtDataModule) -> None:
@@ -48,6 +47,7 @@ class Frdd(BaseAE):
             self.max_pool1,
         )
         self.card_s = datamodule.card_s
+        self.card_y = datamodule.card_y
         self.output_layers = {
             "block1_conv1": 1,
             "block2_conv1": 6,
@@ -161,7 +161,7 @@ class Frdd(BaseAE):
             batch, vgg, debiased_vgg, recon_loss
         )
 
-        tv_loss = self.tv_loss(debiased_x_hat, requires_grad=True)
+        tv_loss = self.tv_loss(debiased_x_hat).mean()
 
         mae = self._mae(
             stage, self.denormalizer(debiased_x_hat), self.denormalizer(batch.x)

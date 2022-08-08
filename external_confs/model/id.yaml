@@ -1,2 +1,2 @@
 defaults:
-  - /schema/model: id
+  - /schema/model: id_base

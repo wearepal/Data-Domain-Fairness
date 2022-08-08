@@ -170,7 +170,6 @@ class BaseAE(pl.LightningModule):
         self.log_dict(
             {f"{stage}/{k}": v for k, v in logs.items()}, on_step=True, on_epoch=False
         )
-        # return {f"{TO_MIN}": loss, "z": z, "s": batch.s.detach()}
         return {f"{TO_MIN}": loss}
 
     @implements(pl.LightningModule)
@@ -192,23 +191,7 @@ class BaseAE(pl.LightningModule):
         return self._shared_step(batch, batch_idx, stage=Stage.test)
 
     def _shared_epoch_end(self, outputs: dict[str, torch.Tensor], stage: Stage) -> None:
-        # z = torch.cat([_r["z"] for _r in outputs[0]], 0)
-        # test_z = torch.cat([_r["z"] for _r in outputs[1]], 0)
-        # s = torch.cat([_r["s"] for _r in outputs[0]], 0)
-        # test_s = torch.cat([_r["s"] for _r in outputs[1]], 0)
-
-        # lrcv = LogisticRegression(solver="sag")
-
-        # scaler = StandardScaler()
-        # z = scaler.fit_transform(z.detach().cpu().numpy())
-        # test_z = scaler.transform(test_z.detach().cpu().numpy())
-
-        # lrcv.fit(z, s.detach().cpu().numpy())
-        # preds = lrcv.predict(test_z)
-
-        # acc = accuracy_score(test_s.detach().cpu().numpy(), preds)
         mae = self.maes[f"{stage}"]
-        # self.log_dict({f"{stage}/{S_ACC}": acc, f"{stage}/{MAE}": mae})
         self.log_dict({f"{stage}/{MAE}": mae})
 
     @implements(pl.LightningModule)
@@ -259,7 +242,6 @@ class BaseAE(pl.LightningModule):
         trainer.test(
             model=self,
             dataloaders=dm.test_dataloader(),
-            # [dm.train_dataloader(shuffle=False, drop_last=False), dm.test_dataloader()],
             verbose=verbose,
         )
 
