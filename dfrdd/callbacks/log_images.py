@@ -145,7 +145,7 @@ class ImageToLogger(pl.Callback):
             pad_value=self.pad_value,
         )
         str_title = f"{stage}/{pl_module.__class__.__name__}_{caption}_images"
-        pl_module.logger.log_image(key=str_title, images=wandb.Image(transforms.ToPILImage()(grid), caption=caption))
+        pl_module.logger.log_image(key=str_title, images=[transforms.ToPILImage()(grid)], caption=[caption])
         # trainer.logger.experiment.log(
         #     {str_title: wandb.Image(transforms.ToPILImage()(grid), caption=caption)},
         #     commit=False,
