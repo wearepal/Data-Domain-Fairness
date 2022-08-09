@@ -36,7 +36,7 @@ SENS_FEATS_SIG = 0.5
 
 class Frdd(BaseAE):
     def _build(self):
-        self.pred_loss_fn = nn.CrossEntropyLoss()
+        self.pred_loss_fn = nn.CrossEntropyLoss(reduction="sum")
         self.tv_loss = TotalVariation()
         self.fc_layer = nn.Linear(self.vgg.model.classifier[0].in_features, self.card_y)
 
@@ -161,7 +161,7 @@ class Frdd(BaseAE):
             batch, vgg, debiased_vgg, recon_loss
         )
 
-        tv_loss = self.tv_loss(debiased_x_hat).mean() * 1e-3
+        tv_loss = self.tv_loss(debiased_x_hat).sum() * 1e-3
 
         mae = self._mae(
             stage, self.denormalizer(debiased_x_hat), self.denormalizer(batch.x)
