@@ -30,6 +30,8 @@ from dfrdd.components.hsic import hsic, kernel_matrix
 from dfrdd.models.autoencoder import BaseAE
 from dfrdd.models.vgg import VGG, VggOut
 
+IMAGE_FEATS_SIG = 1.0
+SENS_FEATS_SIG = 0.5
 
 class Frdd(BaseAE):
     def _build(self):
@@ -120,27 +122,25 @@ class Frdd(BaseAE):
         )
 
         biased_mmd_loss = torch.zeros_like(example_loss)
-        for sig in SIG_VALUES:
-            for out in biased_blocks:
-                kern_xx = kernel_matrix(x=out, sigma=sig)
-                kern_ss = kernel_matrix(
-                    x=F.one_hot(batch.s[batch.y == mask], num_classes=self.card_s),
-                    sigma=sig,
-                )
-                biased_mmd_loss += hsic(
-                    kern_x=kern_xx, kern_y=kern_ss, m=batch.x.shape[0]
-                )
+        for out in biased_blocks:
+            kern_xx = kernel_matrix(x=out, sigma=IMAGE_FEATS_SIG)
+            kern_ss = kernel_matrix(
+                x=F.one_hot(batch.s[batch.y == mask], num_classes=self.card_s),
+                sigma=SENS_FEATS_SIG,
+            )
+            biased_mmd_loss += hsic(
+                kern_x=kern_xx, kern_y=kern_ss, m=batch.x.shape[0]
+            )
         debiased_mmd_loss = torch.zeros_like(example_loss)
-        for sig in SIG_VALUES:
-            for out in debiased_blocks:
-                kern_xx = kernel_matrix(x=out, sigma=sig)
-                kern_ss = kernel_matrix(
-                    x=F.one_hot(batch.s[batch.y == mask], num_classes=self.card_s),
-                    sigma=sig,
-                )
-                debiased_mmd_loss += hsic(
-                    kern_x=kern_xx, kern_y=kern_ss, m=batch.x.shape[0]
-                )
+        for out in debiased_blocks:
+            kern_xx = kernel_matrix(x=out, sigma=IMAGE_FEATS_SIG)
+            kern_ss = kernel_matrix(
+                x=F.one_hot(batch.s[batch.y == mask], num_classes=self.card_s),
+                sigma=SENS_FEATS_SIG,
+            )
+            debiased_mmd_loss += hsic(
+                kern_x=kern_xx, kern_y=kern_ss, m=batch.x.shape[0]
+            )
         return biased_mmd_loss, debiased_mmd_loss
 
     def step(
