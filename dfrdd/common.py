@@ -3,7 +3,7 @@ from enum import Enum
 import torch
 from torch import nn
 
-SIG_VALUES = (0.5,)#, 1.0, 2.0, 5.0, 10.0, 20.0)
+SIG_VALUES = (0.5,)  # , 1.0, 2.0, 5.0, 10.0, 20.0)
 
 TO_MIN = "loss"
 REC_LOSS = "rec_loss"

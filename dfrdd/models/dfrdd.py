@@ -33,6 +33,7 @@ from dfrdd.models.vgg import VGG, VggOut
 IMAGE_FEATS_SIG = 1.0
 SENS_FEATS_SIG = 0.5
 
+
 class Frdd(BaseAE):
     def _build(self):
         self.pred_loss_fn = nn.CrossEntropyLoss()
@@ -128,9 +129,7 @@ class Frdd(BaseAE):
                 x=F.one_hot(batch.s[batch.y == mask], num_classes=self.card_s),
                 sigma=SENS_FEATS_SIG,
             )
-            biased_mmd_loss += hsic(
-                kern_x=kern_xx, kern_y=kern_ss, m=batch.x.shape[0]
-            )
+            biased_mmd_loss += hsic(kern_x=kern_xx, kern_y=kern_ss, m=batch.x.shape[0])
         debiased_mmd_loss = torch.zeros_like(example_loss)
         for out in debiased_blocks:
             kern_xx = kernel_matrix(x=out, sigma=IMAGE_FEATS_SIG)
@@ -152,7 +151,10 @@ class Frdd(BaseAE):
         vgg: VggOut = self.vgg(batch.x)
         debiased_vgg: VggOut = self.vgg(debiased_x_hat)
 
-        recon_loss = self.loss_fn(debiased_vgg.block3_conv1, vgg.block3_conv1.detach()) * self.max_pixel_val
+        recon_loss = self.loss_fn(
+            debiased_vgg.block3_conv1 * self.max_pixel_val,
+            vgg.block3_conv1.detach() * self.max_pixel_val,
+        )
         y_hat = self.fc_layer(debiased_vgg.pool5)
         pred_loss = self.pred_loss_fn(y_hat, batch.y)
 

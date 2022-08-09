@@ -129,11 +129,11 @@ class ImageToLogger(pl.Callback):
         pl_module: pl.LightningModule,
         stage: Stage,
         trainer: pl.Trainer,
-            normalize: bool = False
+        normalize: bool = False,
     ) -> None:
         img = self.denorm(img)
         if normalize:
-            img = ((img-img.min()) / (img.max() - img.min())).clip(min=0, max=1) * 255
+            img = ((img - img.min()) / (img.max() - img.min())).clip(min=0, max=1) * 255
         if len(img.size()) == 2:
             img_dim = pl_module.img_dim
             img = img.view(self.num_samples, *img_dim)
@@ -214,4 +214,6 @@ class ImagesToLoggerDd(ImageToLogger):
             self.make_grid_and_log(
                 "biased", batch.x - debiased, pl_module, stage, trainer
             )
-            self.make_grid_and_log("debiased", debiased, pl_module, stage, trainer, normalize=True)
+            self.make_grid_and_log(
+                "debiased", debiased, pl_module, stage, trainer, normalize=True
+            )
