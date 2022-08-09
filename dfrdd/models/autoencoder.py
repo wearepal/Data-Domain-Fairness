@@ -128,7 +128,7 @@ class BaseAE(pl.LightningModule):
 
         self.maes = nn.ModuleDict({f"{stage}": MeanAbsoluteError() for stage in Stage})
 
-        self.loss_fn = nn.MSELoss(reduction="sum")
+        self.loss_fn = nn.MSELoss(reduction="mean")
         self.max_pixel_val = 255
         self.denormalizer = Denormalize(
             mean=IMAGENET_STATS.mean,
