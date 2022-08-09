@@ -45,7 +45,7 @@ class Denormalize(nn.Module):
         ).view(
             1, -1, 1, 1
         )
-        return img
+        return img.clip(min=0, max=255)
 
 
 class Normalize(nn.Module):
@@ -66,9 +66,4 @@ class Normalize(nn.Module):
                 [a * self.max_px_val for a in self.std], device=img.device
             ).view(1, -1, 1, 1)
         )
-        # img = img * torch.tensor([a * self.max_px_val for a in self.std], device=img.device).view(
-        #     1, -1, 1, 1
-        # ) + torch.tensor([a * self.max_px_val for a in self.mean], device=img.device).view(
-        #     1, -1, 1, 1
-        # )
         return img
