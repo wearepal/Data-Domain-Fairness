@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 import attr
+import conduit.data.datamodules
 import pytorch_lightning as pl
 from hydra.utils import instantiate
 from omegaconf import DictConfig, MISSING
@@ -16,7 +17,11 @@ from pytorch_lightning.loggers import WandbLogger
 from ranzen import implements
 from ranzen.hydra import Option, Relay
 from fairscale.nn import auto_wrap  # type: ignore
+import conduit as cdt
+from dfrdd.callbacks import ImagesToLogger, ImagesToLoggerDd, Znorm, Zmean
+from dfrdd.callbacks.save import Save
 from dfrdd.conf import WandbLoggerConf
+from dfrdd.models import Frdd
 
 LOGGER = logging.getLogger(__name__)
 warnings.simplefilter(action="ignore", category=UserWarning)
@@ -82,7 +87,7 @@ class DfddRelay(Relay):
         self.log(f"Current working directory: '{os.getcwd()}'")
         pl.seed_everything(self.seed, workers=True)
 
-        dm: pl.LightningDataModule = instantiate(self.data)
+        dm: cdt.data.datamodules.CdtVisionDataModule = instantiate(self.data)
         dm.prepare_data()
         dm.setup()
 
@@ -114,5 +119,11 @@ class DfddRelay(Relay):
         )
         checkpointer: ModelCheckpoint = instantiate(self.checkpointer)
         trainer.callbacks.append(checkpointer)
+        trainer.callbacks += [
+            ImagesToLoggerDd(mean=dm.norm_values.mean, std=dm.norm_values.std) if isinstance(model, Frdd) else ImagesToLogger(mean=dm.norm_values.mean, std=dm.norm_values.std),
+            Znorm(),
+            Zmean(),
+            # Save(),
+        ]
 
         model.run(trainer=trainer, datamodule=dm, seed=self.seed)

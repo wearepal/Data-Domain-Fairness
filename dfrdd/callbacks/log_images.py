@@ -208,5 +208,5 @@ class ImagesToLoggerDd(ImageToLogger):
                 pl_module.unfreeze()
             else:
                 _, debiased = pl_module(image_batch, batch.s)
-            # self.make_grid_and_log("biased", biased, pl_module, stage, trainer)
+            self.make_grid_and_log("biased", batch.x - debiased, pl_module, stage, trainer)
             self.make_grid_and_log("debiased", debiased, pl_module, stage, trainer)
