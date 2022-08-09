@@ -3,7 +3,7 @@ from typing import Mapping, Union
 import torch
 import torch.nn.functional as F
 from conduit.data import IMAGENET_STATS, CdtDataModule, TernarySample
-from conduit.types import Stage, LRScheduler
+from conduit.types import LRScheduler, Stage
 from kornia.losses import TotalVariation
 from pl_bolts.models.autoencoders import resnet18_decoder, resnet18_encoder
 from ranzen import implements
@@ -12,6 +12,7 @@ from torch import nn
 
 __all__ = ["Frdd"]
 
+import pytorch_lightning as pl
 from torch.optim.lr_scheduler import CosineAnnealingWarmRestarts
 
 from dfrdd.common import (
@@ -28,15 +29,13 @@ from dfrdd.common import (
 from dfrdd.components.hsic import hsic, kernel_matrix
 from dfrdd.models.autoencoder import BaseAE
 from dfrdd.models.vgg import VGG, VggOut
-import pytorch_lightning as pl
+
 
 class Frdd(BaseAE):
     def _build(self):
         self.pred_loss_fn = nn.CrossEntropyLoss()
         self.tv_loss = TotalVariation()
-        self.fc_layer = nn.Linear(
-            self.vgg.model.classifier[0].in_features, self.card_y
-        )
+        self.fc_layer = nn.Linear(self.vgg.model.classifier[0].in_features, self.card_y)
 
     def build(self, datamodule: CdtDataModule) -> None:
         self.encoder = resnet18_encoder(self.first_conv, self.max_pool1)
@@ -71,7 +70,7 @@ class Frdd(BaseAE):
         self,
     ) -> Mapping[str, Union[LRScheduler, int, TrainingMode]]:
         opt = torch.optim.AdamW(
-            list(self.encoder.parameters())+list(self.decoder.parameters()),
+            list(self.encoder.parameters()) + list(self.decoder.parameters()),
             lr=self.lr,
             weight_decay=self.weight_decay,
         )

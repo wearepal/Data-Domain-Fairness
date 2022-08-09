@@ -103,7 +103,9 @@ class VGG(nn.Module):
                     self.forward_hook(layer_name)
                 )
             )
-        self.fhooks.append(self.model.avgpool.register_forward_hook(self.forward_hook("pool5")))
+        self.fhooks.append(
+            self.model.avgpool.register_forward_hook(self.forward_hook("pool5"))
+        )
 
     def forward_hook(
         self, layer_name: str

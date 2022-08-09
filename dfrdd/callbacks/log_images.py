@@ -6,7 +6,6 @@ from typing import Dict, Optional, Tuple, Union
 
 import pytorch_lightning as pl
 import torch
-import wandb
 from conduit.data import TernarySample
 from conduit.types import Stage
 from pl_bolts.utils import _TORCHVISION_AVAILABLE
@@ -15,6 +14,7 @@ from ranzen import implements
 from torch import Tensor
 from torchvision.transforms import transforms
 
+import wandb
 from dfrdd.common import Denormalize
 
 if _TORCHVISION_AVAILABLE:
@@ -208,5 +208,7 @@ class ImagesToLoggerDd(ImageToLogger):
                 pl_module.unfreeze()
             else:
                 _, debiased = pl_module(image_batch, batch.s)
-            self.make_grid_and_log("biased", batch.x - debiased, pl_module, stage, trainer)
+            self.make_grid_and_log(
+                "biased", batch.x - debiased, pl_module, stage, trainer
+            )
             self.make_grid_and_log("debiased", debiased, pl_module, stage, trainer)

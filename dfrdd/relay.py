@@ -8,18 +8,18 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 import attr
+import conduit as cdt
 import conduit.data.datamodules
 import pytorch_lightning as pl
+from fairscale.nn import auto_wrap  # type: ignore
 from hydra.utils import instantiate
-from omegaconf import DictConfig, MISSING
+from omegaconf import MISSING, DictConfig
 from pytorch_lightning.callbacks import ModelCheckpoint
 from pytorch_lightning.loggers import WandbLogger
 from ranzen import implements
 from ranzen.hydra import Option, Relay
-from fairscale.nn import auto_wrap  # type: ignore
-import conduit as cdt
-from dfrdd.callbacks import ImagesToLogger, ImagesToLoggerDd, Znorm, Zmean
-from dfrdd.callbacks.save import Save
+
+from dfrdd.callbacks import ImagesToLogger, ImagesToLoggerDd
 from dfrdd.conf import WandbLoggerConf
 from dfrdd.models import Frdd
 
@@ -119,11 +119,10 @@ class DfddRelay(Relay):
         )
         checkpointer: ModelCheckpoint = instantiate(self.checkpointer)
         trainer.callbacks.append(checkpointer)
-        trainer.callbacks += [
-            ImagesToLoggerDd(mean=dm.norm_values.mean, std=dm.norm_values.std) if isinstance(model, Frdd) else ImagesToLogger(mean=dm.norm_values.mean, std=dm.norm_values.std),
-            Znorm(),
-            Zmean(),
-            # Save(),
-        ]
+        trainer.callbacks.append(
+            ImagesToLoggerDd(mean=dm.norm_values.mean, std=dm.norm_values.std)
+            if isinstance(model, Frdd)
+            else ImagesToLogger(mean=dm.norm_values.mean, std=dm.norm_values.std),
+        )
 
         model.run(trainer=trainer, datamodule=dm, seed=self.seed)
