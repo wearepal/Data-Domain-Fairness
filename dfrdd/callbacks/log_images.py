@@ -215,4 +215,4 @@ class ImagesToLoggerDd(ImageToLogger):
                 "biased", batch.x - debiased, pl_module, stage, trainer
             )
             self.make_grid_and_log("debiased", debiased, pl_module, stage, trainer, normalize=True)
-            trainer.logger.experiment.log(commit=True)
+            trainer.logger.experiment.log({"ignore": trainer.global_step}, commit=True)
