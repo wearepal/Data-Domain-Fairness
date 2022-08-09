@@ -45,7 +45,7 @@ class Denormalize(nn.Module):
         ).view(
             1, -1, 1, 1
         )
-        return img.clip(min=0, max=255)
+        return img
 
 
 class Normalize(nn.Module):
