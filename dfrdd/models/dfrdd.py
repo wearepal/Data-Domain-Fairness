@@ -26,7 +26,6 @@ from dfrdd.common import (
     TV_LOSS,
     Denormalize,
     FairnessType,
-    Normalize,
 )
 from dfrdd.components.hsic import hsic, kernel_matrix
 from dfrdd.models.vgg import VGG, VggOut
@@ -48,6 +47,9 @@ class Frdd(pl.LightningModule):
         lr_sched_interval: TrainingMode = TrainingMode.epoch,
         lr_sched_freq: int = 1,
         fairness: Union[FairnessType, str] = FairnessType.DP,
+        image_size: int = 64,
+        card_s: int = 2,
+            card_y: int = 2,
     ):
         """
         Args:
@@ -71,6 +73,7 @@ class Frdd(pl.LightningModule):
         self.lr_restart_mult = lr_restart_mult
         self.lr_sched_interval = lr_sched_interval
         self.lr_sched_freq = lr_sched_freq
+        self.image_size=image_size
 
         self.enc_out_dim = 512  # set according to the out_channel count of encoder used (512 for resnet18, 2048 for resnet50)
         self.latent_dim = latent_dim
@@ -92,31 +95,7 @@ class Frdd(pl.LightningModule):
             std=IMAGENET_STATS.std,
             max_pixel_val=self.max_pixel_val,
         )
-        self.normalizer = Normalize(
-            mean=IMAGENET_STATS.mean,
-            std=IMAGENET_STATS.std,
-            max_pixel_val=self.max_pixel_val,
-        )
 
-    def _mae(
-        self, stage: Stage, x_hat: torch.Tensor, target: torch.Tensor
-    ) -> nn.Module:
-        mae = self.maes[f"{stage}"]
-        mae(x_hat.detach(), target)
-        return mae
-
-    def build(self, datamodule: CdtDataModule) -> None:
-        self.encoder = nn.Sequential(resnet18_encoder(self.first_conv, self.max_pool1), nn.Linear(self.enc_out_dim, self.latent_dim))
-        self.encoder.requires_grad_(True)
-        self.decoder = resnet18_decoder(
-            self.latent_dim,
-            datamodule.image_size,
-            self.first_conv,
-            self.max_pool1,
-        )
-        self.decoder.requires_grad_(True)
-        self.card_s = datamodule.card_s
-        self.card_y = datamodule.card_y
         self.output_layers = {
             "block3_conv1": 11,
             "block4_conv1": 20,
@@ -124,19 +103,26 @@ class Frdd(pl.LightningModule):
         }
         self.vgg = VGG(self.output_layers)
         self.vgg.requires_grad_(False)
-        torch.autograd.set_detect_anomaly(True)
-        self.denormalizer = Denormalize(
-            mean=IMAGENET_STATS.mean,
-            std=IMAGENET_STATS.std,
-            max_pixel_val=self.max_pixel_val,
-        )
-        self.max_pixel_val = 1.0
-        self._build()
+        self.encoder = nn.Sequential(resnet18_encoder(self.first_conv, self.max_pool1),
+                                     nn.Linear(self.enc_out_dim, self.latent_dim))
+        self.encoder.requires_grad_(True)
 
-    def _build(self):
         self.pred_loss_fn = nn.CrossEntropyLoss(reduction="mean")
         self.tv_loss = TotalVariation()
+
+        self.decoder = resnet18_decoder(
+            self.latent_dim,
+            self.image_size,
+            self.first_conv,
+            self.max_pool1,
+        )
+        self.decoder.requires_grad_(True)
+
+        self.card_s = card_s
+        self.card_y = card_y
+
         self.fc_layer = nn.Linear(self.vgg.model.classifier[0].in_features, self.card_y)
+
 
     def decomposition_loss(
         self,
@@ -276,7 +262,6 @@ class Frdd(pl.LightningModule):
     def configure_optimizers(
         self,
     ) -> Mapping[str, Union[LRScheduler, int, TrainingMode]]:
-        print(list(iter(filter(lambda p: p.requires_grad, self.parameters()))))
         opt = torch.optim.AdamW(
             filter(lambda p: p.requires_grad, self.parameters()),
             lr=self.lr,
@@ -316,6 +301,5 @@ class Frdd(pl.LightningModule):
     ) -> None:
         """Seed, build, fit, and test the model."""
         pl.seed_everything(seed)
-        self.build(datamodule)
         self.fit(trainer=trainer, dm=datamodule)
         self.test(trainer=trainer, dm=datamodule)
