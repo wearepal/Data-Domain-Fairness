@@ -161,7 +161,7 @@ class Frdd(BaseAE):
             batch, vgg, debiased_vgg, recon_loss
         )
 
-        tv_loss = self.tv_loss(debiased_x_hat).mean() * 1e-3
+        tv_loss = self.tv_loss(debiased_x_hat).mean() * 1e-8
 
         mae = self._mae(
             stage, self.denormalizer(debiased_x_hat), self.denormalizer(batch.x)
