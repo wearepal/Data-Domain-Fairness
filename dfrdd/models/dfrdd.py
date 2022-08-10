@@ -49,7 +49,7 @@ class Frdd(pl.LightningModule):
         fairness: Union[FairnessType, str] = FairnessType.DP,
         image_size: int = 64,
         card_s: int = 2,
-            card_y: int = 2,
+        card_y: int = 2,
     ):
         """
         Args:
@@ -73,7 +73,7 @@ class Frdd(pl.LightningModule):
         self.lr_restart_mult = lr_restart_mult
         self.lr_sched_interval = lr_sched_interval
         self.lr_sched_freq = lr_sched_freq
-        self.image_size=image_size
+        self.image_size = image_size
 
         self.enc_out_dim = 512  # set according to the out_channel count of encoder used (512 for resnet18, 2048 for resnet50)
         self.latent_dim = latent_dim
@@ -103,8 +103,10 @@ class Frdd(pl.LightningModule):
         }
         self.vgg = VGG(self.output_layers)
         self.vgg.requires_grad_(False)
-        self.encoder = nn.Sequential(resnet18_encoder(self.first_conv, self.max_pool1),
-                                     nn.Linear(self.enc_out_dim, self.latent_dim))
+        self.encoder = nn.Sequential(
+            resnet18_encoder(self.first_conv, self.max_pool1),
+            nn.Linear(self.enc_out_dim, self.latent_dim),
+        )
         self.encoder.requires_grad_(True)
 
         self.pred_loss_fn = nn.CrossEntropyLoss(reduction="mean")
@@ -122,7 +124,6 @@ class Frdd(pl.LightningModule):
         self.card_y = card_y
 
         self.fc_layer = nn.Linear(self.vgg.model.classifier[0].in_features, self.card_y)
-
 
     def decomposition_loss(
         self,
@@ -175,7 +176,9 @@ class Frdd(pl.LightningModule):
         # vgg: VggOut = self.vgg(batch.x)
         debiased_vgg: VggOut = self.vgg(debiased_x_hat)
 
-        recon_loss = self.loss_fn(debiased_x_hat, batch.x)
+        recon_loss = self.loss_fn(
+            self.denormalizer(debiased_x_hat), self.denormalizer(batch.x)
+        )
         y_hat = self.fc_layer(debiased_vgg.pool5)
         pred_loss = self.pred_loss_fn(y_hat, batch.y)
 
