@@ -42,12 +42,14 @@ class Frdd(BaseAE):
 
     def build(self, datamodule: CdtDataModule) -> None:
         self.encoder = resnet18_encoder(self.first_conv, self.max_pool1)
+        self.encoder.requires_grad_(True)
         self.decoder = resnet18_decoder(
             self.enc_out_dim,
             datamodule.image_size,
             self.first_conv,
             self.max_pool1,
         )
+        self.decoder.requires_grad_(True)
         self.card_s = datamodule.card_s
         self.card_y = datamodule.card_y
         self.output_layers = {
@@ -67,24 +69,6 @@ class Frdd(BaseAE):
         )
         self.max_pixel_val = 1.0
         self._build()
-
-    @implements(pl.LightningModule)
-    def configure_optimizers(
-        self,
-    ) -> Mapping[str, Union[LRScheduler, int, TrainingMode]]:
-        opt = torch.optim.AdamW(
-            list(self.encoder.parameters()) + list(self.decoder.parameters()),
-            lr=self.lr,
-            weight_decay=self.weight_decay,
-        )
-        return {
-            "optimizer": opt,
-            "scheduler": CosineAnnealingWarmRestarts(
-                optimizer=opt, T_0=self.lr_initial_restart, T_mult=self.lr_restart_mult
-            ),
-            "interval": self.lr_sched_interval.name,
-            "frequency": self.lr_sched_freq,
-        }
 
     @implements(nn.Module)
     def forward(

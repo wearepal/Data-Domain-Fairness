@@ -207,7 +207,7 @@ class BaseAE(pl.LightningModule):
         self,
     ) -> Mapping[str, Union[LRScheduler, int, TrainingMode]]:
         opt = torch.optim.AdamW(
-            self.parameters(),
+            filter(lambda p: p.requires_grad, self.parameters()),
             lr=self.lr,
             weight_decay=self.weight_decay,
         )

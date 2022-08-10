@@ -84,8 +84,8 @@ class VGG(nn.Module):
         super().__init__()
         self.model = vgg19(pretrained=True)
         self.model.training = False
-        for param in self.model.parameters():
-            param.requires_grad_(False)
+        self.model.requires_grad_(False)
+
         self.model.eval()
 
         def new_train(self: T, mode: bool = True) -> T:
