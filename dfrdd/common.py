@@ -39,9 +39,9 @@ class Denormalize(nn.Module):
     def forward(self, img: torch.Tensor) -> torch.Tensor:
         # `img = (img - mean * max_pixel_value) / (std * max_pixel_value)`
         img = img * torch.tensor(
-            [a * self.max_px_val for a in self.std], device=img.device
+            [a * self.max_px_val for a in self.std], device=img.device, requires_grad=False
         ).view(1, -1, 1, 1) + torch.tensor(
-            [a * self.max_px_val for a in self.mean], device=img.device
+            [a * self.max_px_val for a in self.mean], device=img.device, requires_grad=False
         ).view(
             1, -1, 1, 1
         )
@@ -59,11 +59,11 @@ class Normalize(nn.Module):
         img = (
             img
             - torch.tensor(
-                [a * self.max_px_val for a in self.mean], device=img.device
+                [a * self.max_px_val for a in self.mean], device=img.device, requires_grad=False
             ).view(1, -1, 1, 1)
         ) / (
             torch.tensor(
-                [a * self.max_px_val for a in self.std], device=img.device
+                [a * self.max_px_val for a in self.std], device=img.device, requires_grad=False
             ).view(1, -1, 1, 1)
         )
         return img
