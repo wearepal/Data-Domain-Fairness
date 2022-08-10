@@ -123,7 +123,7 @@ class Frdd(BaseAE):
                 x=F.one_hot(batch.s[batch.y == mask], num_classes=self.card_s),
                 sigma=SENS_FEATS_SIG,
             )
-            biased_mmd_loss += hsic(kern_x=kern_xx, kern_y=kern_ss, m=batch.x.shape[0])
+            biased_mmd_loss -= hsic(kern_x=kern_xx, kern_y=kern_ss, m=batch.x.shape[0])
         debiased_mmd_loss = torch.zeros_like(example_loss)
         for out in debiased_blocks:
             kern_xx = kernel_matrix(x=out, sigma=IMAGE_FEATS_SIG)
