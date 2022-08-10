@@ -9,9 +9,9 @@ from torchvision.models import vgg19
 
 
 class VggOut(NamedTuple):
-    block5_conv2: torch.Tensor
-    block1_conv1: torch.Tensor
-    block2_conv1: torch.Tensor
+    # block5_conv2: torch.Tensor
+    # block1_conv1: torch.Tensor
+    # block2_conv1: torch.Tensor
     block3_conv1: torch.Tensor
     block4_conv1: torch.Tensor
     block5_conv1: torch.Tensor
