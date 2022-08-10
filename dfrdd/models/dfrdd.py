@@ -160,9 +160,13 @@ class Frdd(BaseAE):
         mae = self._mae(
             stage, self.denormalizer(debiased_x_hat), self.denormalizer(batch.x)
         )
-        total_loss = (
-            recon_loss + pred_loss #+ biased_decomp_loss + debiased_decomp_loss + tv_loss
-        )
+        if self.current_epoch < 10:
+            total_loss = recon_loss
+        else:
+            total_loss = (
+                recon_loss
+                + pred_loss  # + biased_decomp_loss + debiased_decomp_loss + tv_loss
+            )
         return (
             total_loss,
             {
