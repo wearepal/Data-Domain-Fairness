@@ -130,7 +130,7 @@ class Frdd(BaseAE):
         debiased_vgg: VggOut = self.vgg(debiased_x_hat)
 
         recon_loss = self.loss_fn(
-            self.denormalizer(debiased_x_hat), self.denormalizer(batch.x)
+            debiased_x_hat, batch.x
         )
         y_hat = self.fc_layer(debiased_vgg.pool5)
         pred_loss = self.pred_loss_fn(y_hat, batch.y)
