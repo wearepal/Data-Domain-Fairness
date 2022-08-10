@@ -81,14 +81,9 @@ class Frdd(pl.LightningModule):
         self.first_conv = first_conv
         self.max_pool1 = maxpool1
 
-        self.encoder = nn.Sequential(
-            resnet18_encoder(self.first_conv, self.max_pool1),
-            nn.Linear(self.enc_out_dim, self.latent_dim),
-        )
-
         self.maes = nn.ModuleDict({f"{stage}": MeanAbsoluteError() for stage in Stage})
 
-        self.loss_fn = nn.MSELoss(reduction="mean")
+        self.loss_fn = nn.L1Loss(reduction="mean")
         self.max_pixel_val = 255
         self.denormalizer = Denormalize(
             mean=IMAGENET_STATS.mean,
@@ -104,7 +99,7 @@ class Frdd(pl.LightningModule):
         self.vgg = VGG(self.output_layers)
         self.vgg.requires_grad_(False)
         self.encoder = nn.Sequential(
-            resnet18_encoder(self.first_conv, self.max_pool1),
+            resnet18_encoder(first_conv=self.first_conv, maxpool1=self.max_pool1),
             nn.Linear(self.enc_out_dim, self.latent_dim),
         )
         self.encoder.requires_grad_(True)
@@ -113,10 +108,10 @@ class Frdd(pl.LightningModule):
         self.tv_loss = TotalVariation()
 
         self.decoder = resnet18_decoder(
-            self.latent_dim,
-            self.image_size,
-            self.first_conv,
-            self.max_pool1,
+            latent_dim=self.latent_dim,
+            input_height=self.image_size,
+            first_conv=self.first_conv,
+            maxpool1=self.max_pool1,
         )
         self.decoder.requires_grad_(True)
 
