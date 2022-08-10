@@ -103,23 +103,17 @@ class Frdd(BaseAE):
     ):
         mask = 1 if self.fairness == FairnessType.EqOp else batch.y
         biased_blocks = (
-            vgg.block2_conv1[batch.y == mask]
-            - debiased_vgg.block2_conv1[batch.y == mask],
             vgg.block3_conv1[batch.y == mask]
             - debiased_vgg.block3_conv1[batch.y == mask],
             vgg.block4_conv1[batch.y == mask]
             - debiased_vgg.block4_conv1[batch.y == mask],
             vgg.block5_conv1[batch.y == mask]
             - debiased_vgg.block5_conv1[batch.y == mask],
-            vgg.block5_conv2[batch.y == mask]
-            - debiased_vgg.block5_conv2[batch.y == mask],
         )
         debiased_blocks = (
-            debiased_vgg.block2_conv1[batch.y == mask],
             debiased_vgg.block3_conv1[batch.y == mask],
             debiased_vgg.block4_conv1[batch.y == mask],
             debiased_vgg.block5_conv1[batch.y == mask],
-            debiased_vgg.block5_conv2[batch.y == mask],
         )
 
         biased_mmd_loss = torch.zeros_like(example_loss)
