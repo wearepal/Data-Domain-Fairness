@@ -132,17 +132,15 @@ class ImageToLogger(pl.Callback):
         normalize: bool = False,
     ) -> None:
         img = self.denorm(img)
-        if normalize:
-            img = ((img - img.min()) / (img.max() - img.min())).clip(min=0, max=1) * 255
         if len(img.size()) == 2:
             img_dim = pl_module.img_dim
             img = img.view(self.num_samples, *img_dim)
 
         grid = torchvision.utils.make_grid(
-            tensor=img.clip(0, 1),
+            tensor=img,
             nrow=self.nrow,
             padding=self.padding,
-            normalize=self.normalize,
+            normalize=normalize,
             range=self.norm_range,
             scale_each=self.scale_each,
             pad_value=self.pad_value,
