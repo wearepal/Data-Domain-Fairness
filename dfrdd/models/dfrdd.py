@@ -106,10 +106,10 @@ class Frdd(pl.LightningModule):
         return mae
 
     def build(self, datamodule: CdtDataModule) -> None:
-        self.encoder = resnet18_encoder(self.first_conv, self.max_pool1)
+        self.encoder = nn.Sequential(resnet18_encoder(self.first_conv, self.max_pool1), nn.Linear(self.enc_out_dim, self.latent_dim))
         self.encoder.requires_grad_(True)
         self.decoder = resnet18_decoder(
-            self.enc_out_dim,
+            self.latent_dim,
             datamodule.image_size,
             self.first_conv,
             self.max_pool1,
@@ -123,6 +123,7 @@ class Frdd(pl.LightningModule):
             "block5_conv1": 29,
         }
         self.vgg = VGG(self.output_layers)
+        self.vgg.requires_grad_(False)
         torch.autograd.set_detect_anomaly(True)
         self.denormalizer = Denormalize(
             mean=IMAGENET_STATS.mean,
@@ -249,13 +250,15 @@ class Frdd(pl.LightningModule):
     def validation_step(
         self, batch: TernarySample, batch_idx: int
     ) -> dict[str, torch.Tensor]:
-        return self._shared_step(batch, batch_idx, stage=Stage.validate)
+        with torch.no_grad():
+            return self._shared_step(batch, batch_idx, stage=Stage.validate)
 
     @implements(pl.LightningModule)
     def test_step(
         self, batch: TernarySample, batch_idx: int
     ) -> dict[str, torch.Tensor]:
-        return self._shared_step(batch, batch_idx, stage=Stage.test)
+        with torch.no_grad():
+            return self._shared_step(batch, batch_idx, stage=Stage.test)
 
     def _shared_epoch_end(self, outputs: dict[str, torch.Tensor], stage: Stage) -> None:
         mae = self.maes[f"{stage}"]
@@ -273,6 +276,7 @@ class Frdd(pl.LightningModule):
     def configure_optimizers(
         self,
     ) -> Mapping[str, Union[LRScheduler, int, TrainingMode]]:
+        print(list(iter(filter(lambda p: p.requires_grad, self.parameters()))))
         opt = torch.optim.AdamW(
             filter(lambda p: p.requires_grad, self.parameters()),
             lr=self.lr,
