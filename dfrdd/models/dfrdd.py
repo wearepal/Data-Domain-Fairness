@@ -161,7 +161,7 @@ class Frdd(BaseAE):
             stage, self.denormalizer(debiased_x_hat), self.denormalizer(batch.x)
         )
         total_loss = (
-            biased_decomp_loss + debiased_decomp_loss + recon_loss + pred_loss + tv_loss
+            recon_loss + pred_loss #+ biased_decomp_loss + debiased_decomp_loss + tv_loss
         )
         return (
             total_loss,
