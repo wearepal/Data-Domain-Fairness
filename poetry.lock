@@ -484,7 +484,7 @@ python-versions = "*"
 
 [[package]]
 name = "neoconfigen"
-version = "2.3.2"
+version = "2.3.3"
 description = "A fork of hydra-core's configen with extended type-compatibility."
 category = "main"
 optional = false
@@ -1314,7 +1314,7 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytest-
 [metadata]
 lock-version = "1.1"
 python-versions = "3.9"
-content-hash = "5a1e2fd381d82b1d5c4007d2945819b28b0965cc189388c0a27076efd612cc07"
+content-hash = "1b6dd4637891aee6d960d38ce39937b4c2fb96fbdf67fb0e18eed12e76233c9b"
 
 [metadata.files]
 absl-py = []
