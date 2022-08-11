@@ -66,8 +66,8 @@ class Frdd(pl.LightningModule):
         self.lr_sched_freq = lr_sched_freq
         self.image_size = image_size
         self.denormalizer = Denormalize(
-            mean=np.multiply(IMAGENET_STATS.mean, 255),
-            std=np.multiply(IMAGENET_STATS.std, 255),
+            mean=IMAGENET_STATS.mean,#np.multiply(IMAGENET_STATS.mean, 255),
+            std=IMAGENET_STATS.std,#np.multiply(IMAGENET_STATS.std, 255),
         )
 
         self.enc_out_dim = 512  # set according to the out_channel count of encoder used (512 for resnet18, 2048 for resnet50)
@@ -168,7 +168,22 @@ class Frdd(pl.LightningModule):
         # tv_loss = self.tv_loss(debiased_x_hat).mean() * 1e-8
 
         mae = self.maes[f"{stage}"]
-
+        self.print(
+            debiased_x_hat.detach().min(),
+            debiased_x_hat.detach().max(),
+            batch.x.min(),
+            batch.x.max(),
+            self.denormalizer(debiased_x_hat.detach()).min(),
+            self.denormalizer(debiased_x_hat.detach()).max(),
+            self.denormalizer(batch.x).min(),
+            self.denormalizer(batch.x).max(),
+            (
+                self.denormalizer(debiased_x_hat.detach()) - self.denormalizer(batch.x)
+            ).min(),
+            (
+                self.denormalizer(debiased_x_hat.detach()) - self.denormalizer(batch.x)
+            ).max(),
+        )
         mae = mae(
             self.denormalizer(debiased_x_hat.detach()), self.denormalizer(batch.x)
         )

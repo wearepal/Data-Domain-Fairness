@@ -77,18 +77,6 @@ class ImagesToLogger(pl.Callback):
             mean=np.multiply(mean, 255), std=np.multiply(std, 255)
         )
 
-    @abstractmethod
-    def log_images(
-        self,
-        trainer: pl.Trainer,
-        pl_module: pl.LightningModule,
-        outputs: Optional[Union[Tensor, Dict[str, Tensor]]],
-        batch: TernarySample,
-        batch_idx: int,
-        stage: Stage,
-    ) -> None:
-        """Log Images to wandb."""
-
     @implements(pl.Callback)
     def on_train_batch_end(
         self,
@@ -134,7 +122,7 @@ class ImagesToLogger(pl.Callback):
         trainer: pl.Trainer,
         normalize: bool = False,
     ) -> None:
-        img = self.denorm(img).clamp(0, 1)
+        img = self.denorm(img).clip(0, 1)
         if len(img.size()) == 2:
             img_dim = pl_module.img_dim
             img = img.view(self.num_samples, *img_dim)
