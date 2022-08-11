@@ -3,6 +3,7 @@ from typing import Mapping, Union, Optional
 import torch
 import torch.nn.functional as F
 from conduit.data import IMAGENET_STATS, CdtDataModule, TernarySample
+from conduit.transforms import Denormalize
 from conduit.types import LRScheduler, Stage
 from kornia.losses import TotalVariation
 from pl_bolts.models.autoencoders import (
@@ -29,7 +30,6 @@ from dfrdd.common import (
     SIG_VALUES,
     TO_MIN,
     TV_LOSS,
-    Denormalize,
     FairnessType,
 )
 from dfrdd.components.hsic import hsic, kernel_matrix
@@ -89,12 +89,6 @@ class Frdd(pl.LightningModule):
         self.maes = nn.ModuleDict({f"{stage}": MeanAbsoluteError() for stage in Stage})
 
         self.loss_fn = nn.MSELoss(reduction="mean")
-        self.max_pixel_val = 255
-        self.denormalizer = Denormalize(
-            mean=IMAGENET_STATS.mean,
-            std=IMAGENET_STATS.std,
-            max_pixel_val=self.max_pixel_val,
-        )
 
         self.output_layers = {
             "block3_conv1": 11,

@@ -7,6 +7,7 @@ from typing import Dict, Optional, Tuple, Union
 import pytorch_lightning as pl
 import torch
 from conduit.data import TernarySample
+from conduit.transforms import Denormalize
 from conduit.types import Stage
 from pl_bolts.utils import _TORCHVISION_AVAILABLE
 from pl_bolts.utils.warnings import warn_missing_pkg
@@ -15,7 +16,6 @@ from torch import Tensor
 from torchvision.transforms import transforms
 
 import wandb
-from dfrdd.common import Denormalize
 
 if _TORCHVISION_AVAILABLE:
     import torchvision
