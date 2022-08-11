@@ -253,44 +253,16 @@ class Frdd(pl.LightningModule):
     def configure_optimizers(
         self,
     ) -> Mapping[str, Union[LRScheduler, int, TrainingMode]]:
-        opt = torch.optim.AdamW(
+        return torch.optim.AdamW(
             params=self.parameters(),
             lr=self.lr,
             weight_decay=self.weight_decay,
         )
-        return {
-            "optimizer": opt,
-            "scheduler": CosineAnnealingWarmRestarts(
-                optimizer=opt, T_0=self.lr_initial_restart, T_mult=self.lr_restart_mult
-            ),
-            "interval": self.lr_sched_interval.name,
-            "frequency": self.lr_sched_freq,
-        }
-
-    def fit(self, trainer: pl.Trainer, dm: CdtDataModule) -> None:
-        trainer.fit(
-            model=self,
-            train_dataloaders=dm.train_dataloader(shuffle=False, drop_last=True),
-            val_dataloaders=dm.val_dataloader(),
-        )
-
-    def test(
-        self, trainer: pl.Trainer, dm: CdtDataModule, verbose: bool = True
-    ) -> None:
-        trainer.test(
-            model=self,
-            dataloaders=dm.test_dataloader(),
-            verbose=verbose,
-        )
-
-    def run(
-        self,
-        *,
-        datamodule: CdtDataModule,
-        trainer: pl.Trainer,
-        seed: Optional[int] = None,
-    ) -> None:
-        """Seed, build, fit, and test the model."""
-        pl.seed_everything(seed)
-        self.fit(trainer=trainer, dm=datamodule)
-        self.test(trainer=trainer, dm=datamodule)
+        # return {
+        #     "optimizer": opt,
+        #     "scheduler": CosineAnnealingWarmRestarts(
+        #         optimizer=opt, T_0=self.lr_initial_restart, T_mult=self.lr_restart_mult, eta_min=1e-8
+        #     ),
+        #     "interval": self.lr_sched_interval.name,
+        #     "frequency": self.lr_sched_freq,
+        # }

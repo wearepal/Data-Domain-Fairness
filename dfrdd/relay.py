@@ -14,6 +14,7 @@ import pytorch_lightning as pl
 from fairscale.nn import auto_wrap  # type: ignore
 from hydra.utils import instantiate
 from omegaconf import MISSING, DictConfig
+from pl_bolts.models import AE
 from pytorch_lightning.callbacks import ModelCheckpoint
 from pytorch_lightning.loggers import WandbLogger
 from ranzen import implements
@@ -121,4 +122,14 @@ class DfddRelay(Relay):
             else ImagesToLogger(mean=dm.norm_values.mean, std=dm.norm_values.std),
         )
 
-        model.run(trainer=trainer, datamodule=dm, seed=self.seed)
+        trainer.fit(
+            model=self,
+            train_dataloaders=dm.train_dataloader(shuffle=False, drop_last=True),
+            val_dataloaders=dm.val_dataloader(),
+        )
+
+        trainer.test(
+            model=self,
+            dataloaders=dm.test_dataloader(),
+            verbose=True,
+        )
