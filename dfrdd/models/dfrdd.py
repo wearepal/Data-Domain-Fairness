@@ -83,7 +83,7 @@ class Frdd(pl.LightningModule):
 
         self.maes = nn.ModuleDict({f"{stage}": MeanAbsoluteError() for stage in Stage})
 
-        self.loss_fn = nn.L1Loss(reduction="mean")
+        self.loss_fn = nn.MSELoss(reduction="mean")
         self.max_pixel_val = 255
         self.denormalizer = Denormalize(
             mean=IMAGENET_STATS.mean,
@@ -171,9 +171,7 @@ class Frdd(pl.LightningModule):
         # vgg: VggOut = self.vgg(batch.x)
         debiased_vgg: VggOut = self.vgg(debiased_x_hat)
 
-        recon_loss = self.loss_fn(
-            self.denormalizer(debiased_x_hat), self.denormalizer(batch.x)
-        )
+        recon_loss = self.loss_fn(debiased_x_hat, batch.x)
         y_hat = self.fc_layer(debiased_vgg.pool5)
         pred_loss = self.pred_loss_fn(y_hat, batch.y)
 
