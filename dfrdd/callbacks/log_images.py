@@ -132,7 +132,7 @@ class ImagesToLogger(pl.Callback):
         trainer: pl.Trainer,
         normalize: bool = False,
     ) -> None:
-        img = self.denorm(img)
+        img = self.denorm(img).clamp(0,255)
         if len(img.size()) == 2:
             img_dim = pl_module.img_dim
             img = img.view(self.num_samples, *img_dim)
