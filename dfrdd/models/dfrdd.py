@@ -15,6 +15,7 @@ from torch import nn
 __all__ = ["Frdd"]
 
 import pytorch_lightning as pl
+from torch.optim.lr_scheduler import CosineAnnealingLR
 from torchmetrics import MeanAbsoluteError
 
 from dfrdd.common import MAE, REC_LOSS, TO_MIN, FairnessType
@@ -241,16 +242,14 @@ class Frdd(pl.LightningModule):
     def configure_optimizers(
         self,
     ) -> Mapping[str, Union[LRScheduler, int, TrainingMode]]:
-        return torch.optim.AdamW(
+        opt = torch.optim.AdamW(
             params=self.parameters(),
             lr=self.lr,
             weight_decay=self.weight_decay,
         )
-        # return {
-        #     "optimizer": opt,
-        #     "scheduler": CosineAnnealingWarmRestarts(
-        #         optimizer=opt, T_0=self.lr_initial_restart, T_mult=self.lr_restart_mult, eta_min=1e-8
-        #     ),
-        #     "interval": self.lr_sched_interval.name,
-        #     "frequency": self.lr_sched_freq,
-        # }
+        return {
+            "optimizer": opt,
+            "scheduler": CosineAnnealingLR(optimizer=opt, T_max=20_000),
+            "interval": self.lr_sched_interval.name,
+            "frequency": self.lr_sched_freq,
+        }
