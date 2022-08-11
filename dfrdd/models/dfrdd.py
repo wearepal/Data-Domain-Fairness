@@ -1,8 +1,10 @@
 from typing import Mapping, Union
 
+import numpy as np
 import torch
 import torch.nn.functional as F
-from conduit.data import TernarySample
+from conduit.data import TernarySample, IMAGENET_STATS
+from conduit.transforms import Denormalize
 from conduit.types import LRScheduler, Stage
 from kornia.losses import TotalVariation
 from pl_bolts.models.autoencoders import resnet18_decoder, resnet18_encoder
@@ -63,6 +65,8 @@ class Frdd(pl.LightningModule):
         self.lr_sched_interval = lr_sched_interval
         self.lr_sched_freq = lr_sched_freq
         self.image_size = image_size
+        self.denormalizer = Denormalize(mean=np.multiply(IMAGENET_STATS.mean, 255), std=np.multiply(IMAGENET_STATS.std, 255))
+
 
         self.enc_out_dim = 512  # set according to the out_channel count of encoder used (512 for resnet18, 2048 for resnet50)
         self.latent_dim = latent_dim
@@ -161,9 +165,10 @@ class Frdd(pl.LightningModule):
 
         # tv_loss = self.tv_loss(debiased_x_hat).mean() * 1e-8
 
-        # mae = self._mae(
-        #     stage, self.denormalizer(debiased_x_hat), self.denormalizer(batch.x)
-        # )
+        mae = self.maes[f"{stage}"]
+        mae = mae(
+            self.denormalizer(debiased_x_hat.detach()), self.denormalizer(batch.x)
+        )
         # if self.current_epoch < 10:
         total_loss = recon_loss
         # else:
@@ -178,7 +183,7 @@ class Frdd(pl.LightningModule):
                 # f"{MMD_LOSS}_biased": biased_decomp_loss,
                 # f"{MMD_LOSS}_debiased": debiased_decomp_loss,
                 f"{REC_LOSS}": recon_loss.detach(),
-                # f"{MAE}": mae,
+                f"{MAE}": mae.detach(),
                 # f"{PRED_LOSS}": pred_loss,
                 # f"{TV_LOSS}": tv_loss,
             },
@@ -219,18 +224,6 @@ class Frdd(pl.LightningModule):
     ) -> dict[str, torch.Tensor]:
         with torch.no_grad():
             return self._shared_step(batch, batch_idx, stage=Stage.test)
-
-    def _shared_epoch_end(self, outputs: dict[str, torch.Tensor], stage: Stage) -> None:
-        mae = self.maes[f"{stage}"]
-        self.log_dict({f"{stage}/{MAE}": mae})
-
-    @implements(pl.LightningModule)
-    def validation_epoch_end(self, outputs: dict[str, torch.Tensor]) -> None:
-        return self._shared_epoch_end(outputs, stage=Stage.validate)
-
-    @implements(pl.LightningModule)
-    def test_epoch_end(self, outputs: dict[str, torch.Tensor]) -> None:
-        return self._shared_epoch_end(outputs, stage=Stage.test)
 
     @implements(pl.LightningModule)
     def configure_optimizers(
