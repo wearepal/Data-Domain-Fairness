@@ -5,8 +5,6 @@ from ranzen.hydra import Option
 from dfrdd.models import Frdd
 from dfrdd.relay import DfddRelay
 
-torch.multiprocessing.set_sharing_strategy("file_system")
-
 if __name__ == "__main__":
     data_ops: list[Option] = [
         Option(ColoredMNISTDataModule, name="cmnist_base"),

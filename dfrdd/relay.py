@@ -93,10 +93,6 @@ class DfddRelay(Relay):
 
         model: pl.LightningModule = instantiate(self.model)
 
-        # enable parameter sharding with fairscale.
-        # Note: when fully-sharded training is not enabled this is a no-op
-        model = auto_wrap(model)  # type: ignore
-
         if self.logger.get("group", None) is None:
             default_group = (
                 f"{dm.__class__.__name__.removesuffix('DataModule').lower()}_"
@@ -117,8 +113,8 @@ class DfddRelay(Relay):
             logger=logger,
             enable_checkpointing=False,
         )
-        checkpointer: ModelCheckpoint = instantiate(self.checkpointer)
-        trainer.callbacks.append(checkpointer)
+        # checkpointer: ModelCheckpoint = instantiate(self.checkpointer)
+        # trainer.callbacks.append(checkpointer)
         trainer.callbacks.append(
             ImagesToLoggerDd(mean=dm.norm_values.mean, std=dm.norm_values.std)
             if isinstance(model, Frdd)
