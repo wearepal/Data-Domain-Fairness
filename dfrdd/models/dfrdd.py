@@ -96,13 +96,12 @@ class Frdd(pl.LightningModule):
             "block4_conv1": 20,
             "block5_conv1": 29,
         }
-        self.vgg = VGG(self.output_layers)
-        self.vgg.requires_grad_(False)
+        # self.vgg = VGG(self.output_layers)
+        # self.vgg.requires_grad_(False)
         self.encoder = nn.Sequential(
             resnet18_encoder(first_conv=self.first_conv, maxpool1=self.max_pool1),
             nn.Linear(self.enc_out_dim, self.latent_dim),
         )
-        self.encoder.requires_grad_(True)
 
         self.pred_loss_fn = nn.CrossEntropyLoss(reduction="mean")
         self.tv_loss = TotalVariation()
@@ -113,12 +112,10 @@ class Frdd(pl.LightningModule):
             first_conv=self.first_conv,
             maxpool1=self.max_pool1,
         )
-        self.decoder.requires_grad_(True)
-
         self.card_s = card_s
         self.card_y = card_y
 
-        self.fc_layer = nn.Linear(self.vgg.model.classifier[0].in_features, self.card_y)
+        # self.fc_layer = nn.Linear(self.vgg.model.classifier[0].in_features, self.card_y)
 
     def decomposition_loss(
         self,
@@ -169,11 +166,11 @@ class Frdd(pl.LightningModule):
         debiased_x_hat = self.decoder(z)
 
         # vgg: VggOut = self.vgg(batch.x)
-        debiased_vgg: VggOut = self.vgg(debiased_x_hat)
+        # debiased_vgg: VggOut = self.vgg(debiased_x_hat)
 
         recon_loss = self.loss_fn(debiased_x_hat, batch.x)
-        y_hat = self.fc_layer(debiased_vgg.pool5)
-        pred_loss = self.pred_loss_fn(y_hat, batch.y)
+        # y_hat = self.fc_layer(debiased_vgg.pool5)
+        # pred_loss = self.pred_loss_fn(y_hat, batch.y)
 
         # biased_decomp_loss, debiased_decomp_loss = self.decomposition_loss(
         #     batch, vgg, debiased_vgg, recon_loss
@@ -184,13 +181,13 @@ class Frdd(pl.LightningModule):
         # mae = self._mae(
         #     stage, self.denormalizer(debiased_x_hat), self.denormalizer(batch.x)
         # )
-        if self.current_epoch < 10:
-            total_loss = recon_loss
-        else:
-            total_loss = (
-                recon_loss
-                + pred_loss  # + biased_decomp_loss + debiased_decomp_loss + tv_loss
-            )
+        # if self.current_epoch < 10:
+        total_loss = recon_loss
+        # else:
+        #     total_loss = (
+        #         recon_loss
+        #         + pred_loss  # + biased_decomp_loss + debiased_decomp_loss + tv_loss
+        #     )
         return (
             total_loss,
             {
@@ -199,7 +196,7 @@ class Frdd(pl.LightningModule):
                 # f"{MMD_LOSS}_debiased": debiased_decomp_loss,
                 f"{REC_LOSS}": recon_loss,
                 # f"{MAE}": mae,
-                f"{PRED_LOSS}": pred_loss,
+                # f"{PRED_LOSS}": pred_loss,
                 # f"{TV_LOSS}": tv_loss,
             },
             z.detach(),
@@ -259,7 +256,7 @@ class Frdd(pl.LightningModule):
         self,
     ) -> Mapping[str, Union[LRScheduler, int, TrainingMode]]:
         opt = torch.optim.AdamW(
-            filter(lambda p: p.requires_grad, self.parameters()),
+            list(self.encoder.parameters()) + list(self.decoder.parameters()),
             lr=self.lr,
             weight_decay=self.weight_decay,
         )
