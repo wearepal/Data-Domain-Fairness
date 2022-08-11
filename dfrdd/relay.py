@@ -123,13 +123,13 @@ class DfddRelay(Relay):
         )
 
         trainer.fit(
-            model=self,
+            model=model,
             train_dataloaders=dm.train_dataloader(shuffle=False, drop_last=True),
             val_dataloaders=dm.val_dataloader(),
         )
 
         trainer.test(
-            model=self,
+            model=model,
             dataloaders=dm.test_dataloader(),
             verbose=True,
         )
