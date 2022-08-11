@@ -20,7 +20,7 @@ from pytorch_lightning.loggers import WandbLogger
 from ranzen import implements
 from ranzen.hydra import Option, Relay
 
-from dfrdd.callbacks import ImagesToLogger, ImagesToLoggerDd
+from dfrdd.callbacks import ImagesToLogger, ImagesToLogger
 from dfrdd.conf import WandbLoggerConf
 from dfrdd.models import Frdd
 
@@ -117,9 +117,7 @@ class DfddRelay(Relay):
         # checkpointer: ModelCheckpoint = instantiate(self.checkpointer)
         # trainer.callbacks.append(checkpointer)
         trainer.callbacks.append(
-            ImagesToLoggerDd(mean=dm.norm_values.mean, std=dm.norm_values.std)
-            if isinstance(model, Frdd)
-            else ImagesToLogger(mean=dm.norm_values.mean, std=dm.norm_values.std),
+            ImagesToLogger(mean=dm.norm_values.mean, std=dm.norm_values.std)
         )
 
         trainer.fit(

@@ -22,11 +22,11 @@ if _TORCHVISION_AVAILABLE:
 else:  # pragma: no cover
     warn_missing_pkg("torchvision")
 
-__all__ = ["ImagesToLogger", "ImagesToLoggerDd"]
+__all__ = ["ImagesToLogger"]
 
 
-class ImageToLogger(pl.Callback):
-    """Log Images."""
+class ImagesToLogger(pl.Callback):
+    """Image logging callback."""
 
     def __init__(
         self,
@@ -150,42 +150,6 @@ class ImageToLogger(pl.Callback):
             {str_title: wandb.Image(transforms.ToPILImage()(grid), caption=caption)},
             commit=False,
         )
-
-
-class ImagesToLogger(ImageToLogger):
-    """Image logging callback."""
-
-    def log_images(
-        self,
-        trainer: pl.Trainer,
-        pl_module: pl.LightningModule,
-        outputs: Optional[Union[Tensor, Dict[str, Tensor]]],
-        batch: TernarySample,
-        batch_idx: int,
-        dataloader_idx: int,
-        stage: Stage,
-    ) -> None:
-        """Callback that logs images."""
-        if trainer.logger is not None and batch_idx == 1:
-            image_batch = batch.x.to(pl_module.device)
-            self.make_grid_and_log("original", image_batch, pl_module, stage, trainer)
-            with torch.no_grad():
-                pl_module.eval()
-                _, model_out = pl_module(image_batch, batch.s)
-            self.make_grid_and_log("predicted", model_out, pl_module, stage, trainer)
-
-            for i in range(pl_module.card_s):
-                _s = torch.ones_like(batch.s) * i
-
-                with torch.no_grad():
-                    pl_module.eval()
-                    _, model_out = pl_module(image_batch, _s)
-
-                self.make_grid_and_log(f"All_{i}", model_out, pl_module, stage, trainer)
-
-
-class ImagesToLoggerDd(ImageToLogger):
-    """Image logging callback."""
 
     def log_images(
         self,

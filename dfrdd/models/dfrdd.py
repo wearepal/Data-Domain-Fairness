@@ -5,7 +5,12 @@ import torch.nn.functional as F
 from conduit.data import IMAGENET_STATS, CdtDataModule, TernarySample
 from conduit.types import LRScheduler, Stage
 from kornia.losses import TotalVariation
-from pl_bolts.models.autoencoders import resnet18_decoder, resnet18_encoder, resnet50_decoder, resnet50_encoder
+from pl_bolts.models.autoencoders import (
+    resnet18_decoder,
+    resnet18_encoder,
+    resnet50_decoder,
+    resnet50_encoder,
+)
 from ranzen import implements
 from ranzen.torch import TrainingMode
 from torch import nn
@@ -75,7 +80,7 @@ class Frdd(pl.LightningModule):
         self.lr_sched_freq = lr_sched_freq
         self.image_size = image_size
 
-        self.enc_out_dim = 2048#512  # set according to the out_channel count of encoder used (512 for resnet18, 2048 for resnet50)
+        self.enc_out_dim = 2048  # 512  # set according to the out_channel count of encoder used (512 for resnet18, 2048 for resnet50)
         self.latent_dim = latent_dim
 
         self.first_conv = first_conv
