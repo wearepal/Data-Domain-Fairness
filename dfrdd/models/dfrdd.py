@@ -174,10 +174,10 @@ class Frdd(pl.LightningModule):
         return (
             total_loss,
             {
-                f"{TO_MIN}": total_loss,
+                f"{TO_MIN}": total_loss.detach(),
                 # f"{MMD_LOSS}_biased": biased_decomp_loss,
                 # f"{MMD_LOSS}_debiased": debiased_decomp_loss,
-                f"{REC_LOSS}": recon_loss,
+                f"{REC_LOSS}": recon_loss.detach(),
                 # f"{MAE}": mae,
                 # f"{PRED_LOSS}": pred_loss,
                 # f"{TV_LOSS}": tv_loss,
