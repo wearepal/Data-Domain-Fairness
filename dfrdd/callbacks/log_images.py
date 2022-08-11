@@ -203,12 +203,8 @@ class ImagesToLoggerDd(ImageToLogger):
         ):
             image_batch = batch.x.to(pl_module.device)
             self.make_grid_and_log("original", image_batch, pl_module, stage, trainer)
-            if stage == Stage.fit:
-                pl_module.freeze()
-                _, debiased = pl_module(image_batch, batch.s)
-                pl_module.unfreeze()
-            else:
-                _, debiased = pl_module(image_batch, batch.s)
+            with torch.no_grad():
+                _, debiased = pl_module(image_batch)
             self.make_grid_and_log(
                 "biased", batch.x - debiased, pl_module, stage, trainer, normalize=True
             )

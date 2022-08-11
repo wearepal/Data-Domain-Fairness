@@ -203,9 +203,7 @@ class Frdd(pl.LightningModule):
         )
 
     @implements(nn.Module)
-    def forward(
-        self, x: torch.Tensor, s: torch.Tensor
-    ) -> tuple[torch.Tensor, torch.Tensor]:
+    def forward(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         z = self.encoder(x)
         debiased_x_hat = self.decoder(z)
         return z, debiased_x_hat
