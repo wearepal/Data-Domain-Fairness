@@ -73,7 +73,9 @@ class ImagesToLogger(pl.Callback):
         self.norm_range = norm_range
         self.scale_each = scale_each
         self.pad_value = pad_value
-        self.denorm = Denormalize(mean=np.multiply(mean, 255), std=np.multiply(std, 255))
+        self.denorm = Denormalize(
+            mean=np.multiply(mean, 255), std=np.multiply(std, 255)
+        )
 
     @abstractmethod
     def log_images(
@@ -132,7 +134,7 @@ class ImagesToLogger(pl.Callback):
         trainer: pl.Trainer,
         normalize: bool = False,
     ) -> None:
-        img = self.denorm(img).clamp(0,255)
+        img = self.denorm(img).clamp(0, 255)
         if len(img.size()) == 2:
             img_dim = pl_module.img_dim
             img = img.view(self.num_samples, *img_dim)
