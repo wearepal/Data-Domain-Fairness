@@ -169,6 +169,10 @@ class Frdd(pl.LightningModule):
 
         mae = self.maes[f"{stage}"]
         self.print(
+            debiased_x_hat.detach().min(),
+            debiased_x_hat.detach().max(),
+            batch.x.min(),
+            batch.x.max(),
             self.denormalizer(debiased_x_hat.detach()).min(),
             self.denormalizer(debiased_x_hat.detach()).max(),
             self.denormalizer(batch.x).min(),
