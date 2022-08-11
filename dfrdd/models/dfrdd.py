@@ -168,22 +168,7 @@ class Frdd(pl.LightningModule):
         # tv_loss = self.tv_loss(debiased_x_hat).mean() * 1e-8
 
         mae = self.maes[f"{stage}"]
-        self.print(
-            debiased_x_hat.detach().min(),
-            debiased_x_hat.detach().max(),
-            batch.x.min(),
-            batch.x.max(),
-            self.denormalizer(debiased_x_hat.detach()).min(),
-            self.denormalizer(debiased_x_hat.detach()).max(),
-            self.denormalizer(batch.x).min(),
-            self.denormalizer(batch.x).max(),
-            (
-                self.denormalizer(debiased_x_hat.detach()) - self.denormalizer(batch.x)
-            ).min(),
-            (
-                self.denormalizer(debiased_x_hat.detach()) - self.denormalizer(batch.x)
-            ).max(),
-        )
+
         mae = mae(
             self.denormalizer(debiased_x_hat.detach()), self.denormalizer(batch.x)
         )
