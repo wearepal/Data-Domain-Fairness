@@ -72,7 +72,7 @@ class ImagesToLogger(pl.Callback):
         self.norm_range = norm_range
         self.scale_each = scale_each
         self.pad_value = pad_value
-        self.denorm = Denormalize(mean=mean, std=std)
+        self.denorm = Denormalize(mean=mean * 255, std=std * 255)
 
     @abstractmethod
     def log_images(
