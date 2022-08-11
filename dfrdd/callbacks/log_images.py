@@ -4,6 +4,7 @@ from __future__ import annotations
 from abc import abstractmethod
 from typing import Dict, Optional, Tuple, Union
 
+import numpy as np
 import pytorch_lightning as pl
 import torch
 from conduit.data import TernarySample
@@ -72,7 +73,7 @@ class ImagesToLogger(pl.Callback):
         self.norm_range = norm_range
         self.scale_each = scale_each
         self.pad_value = pad_value
-        self.denorm = Denormalize(mean=mean * 255, std=std * 255)
+        self.denorm = Denormalize(mean=np.multiply(mean, 255), std=np.multiply(std, 255))
 
     @abstractmethod
     def log_images(
