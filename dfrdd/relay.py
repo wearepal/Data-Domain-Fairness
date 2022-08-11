@@ -14,15 +14,13 @@ import pytorch_lightning as pl
 from fairscale.nn import auto_wrap  # type: ignore
 from hydra.utils import instantiate
 from omegaconf import MISSING, DictConfig
-from pl_bolts.models import AE
 from pytorch_lightning.callbacks import ModelCheckpoint
 from pytorch_lightning.loggers import WandbLogger
 from ranzen import implements
 from ranzen.hydra import Option, Relay
 
-from dfrdd.callbacks import ImagesToLogger, ImagesToLogger
+from dfrdd.callbacks import ImagesToLogger
 from dfrdd.conf import WandbLoggerConf
-from dfrdd.models import Frdd
 
 LOGGER = logging.getLogger(__name__)
 warnings.simplefilter(action="ignore", category=UserWarning)

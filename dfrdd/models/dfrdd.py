@@ -1,17 +1,11 @@
-from typing import Mapping, Union, Optional
+from typing import Mapping, Union
 
 import torch
 import torch.nn.functional as F
-from conduit.data import IMAGENET_STATS, CdtDataModule, TernarySample
-from conduit.transforms import Denormalize
+from conduit.data import TernarySample
 from conduit.types import LRScheduler, Stage
 from kornia.losses import TotalVariation
-from pl_bolts.models.autoencoders import (
-    resnet18_decoder,
-    resnet18_encoder,
-    resnet50_decoder,
-    resnet50_encoder,
-)
+from pl_bolts.models.autoencoders import resnet18_decoder, resnet18_encoder
 from ranzen import implements
 from ranzen.torch import TrainingMode
 from torch import nn
@@ -19,21 +13,11 @@ from torch import nn
 __all__ = ["Frdd"]
 
 import pytorch_lightning as pl
-from torch.optim.lr_scheduler import CosineAnnealingWarmRestarts
 from torchmetrics import MeanAbsoluteError
 
-from dfrdd.common import (
-    MAE,
-    MMD_LOSS,
-    PRED_LOSS,
-    REC_LOSS,
-    SIG_VALUES,
-    TO_MIN,
-    TV_LOSS,
-    FairnessType,
-)
+from dfrdd.common import MAE, REC_LOSS, TO_MIN, FairnessType
 from dfrdd.components.hsic import hsic, kernel_matrix
-from dfrdd.models.vgg import VGG, VggOut
+from dfrdd.models.vgg import VggOut
 
 IMAGE_FEATS_SIG = 1.0
 SENS_FEATS_SIG = 0.5
@@ -80,7 +64,7 @@ class Frdd(pl.LightningModule):
         self.lr_sched_freq = lr_sched_freq
         self.image_size = image_size
 
-        self.enc_out_dim = 2048  # 512  # set according to the out_channel count of encoder used (512 for resnet18, 2048 for resnet50)
+        self.enc_out_dim = 512  # set according to the out_channel count of encoder used (512 for resnet18, 2048 for resnet50)
         self.latent_dim = latent_dim
 
         self.first_conv = first_conv
@@ -98,14 +82,14 @@ class Frdd(pl.LightningModule):
         # self.vgg = VGG(self.output_layers)
         # self.vgg.requires_grad_(False)
         self.encoder = nn.Sequential(
-            resnet50_encoder(first_conv=self.first_conv, maxpool1=self.max_pool1),
+            resnet18_encoder(first_conv=self.first_conv, maxpool1=self.max_pool1),
             nn.Linear(self.enc_out_dim, self.latent_dim),
         )
 
         self.pred_loss_fn = nn.CrossEntropyLoss(reduction="mean")
         self.tv_loss = TotalVariation()
 
-        self.decoder = resnet50_decoder(
+        self.decoder = resnet18_decoder(
             latent_dim=self.latent_dim,
             input_height=self.image_size,
             first_conv=self.first_conv,

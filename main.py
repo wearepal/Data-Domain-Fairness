@@ -1,4 +1,3 @@
-import torch
 from conduit.data import CelebADataModule, ColoredMNISTDataModule
 from ranzen.hydra import Option
 
