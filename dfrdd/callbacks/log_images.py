@@ -14,7 +14,7 @@ from pl_bolts.utils import _TORCHVISION_AVAILABLE
 from pl_bolts.utils.warnings import warn_missing_pkg
 from ranzen import implements
 from torch import Tensor
-from torchvision.transforms import transforms
+from torchvision.transforms.functional import to_pil_image
 
 import wandb
 
@@ -73,9 +73,7 @@ class ImagesToLogger(pl.Callback):
         self.norm_range = norm_range
         self.scale_each = scale_each
         self.pad_value = pad_value
-        self.denorm = Denormalize(
-            mean=np.multiply(mean, 255), std=np.multiply(std, 255)
-        )
+        self.denorm = Denormalize(mean=mean, std=std)
 
     @implements(pl.Callback)
     def on_train_batch_end(
@@ -122,7 +120,7 @@ class ImagesToLogger(pl.Callback):
         trainer: pl.Trainer,
         normalize: bool = False,
     ) -> None:
-        # img = self.denorm(img).clip(0, 1)
+        img = self.denorm(img).clip(0, 1)
         if len(img.size()) == 2:
             img_dim = pl_module.img_dim
             img = img.view(self.num_samples, *img_dim)
@@ -138,7 +136,7 @@ class ImagesToLogger(pl.Callback):
         )
         str_title = f"{stage}/{pl_module.__class__.__name__}_{caption}_images"
         trainer.logger.experiment.log(
-            {str_title: wandb.Image(transforms.ToPILImage()(grid), caption=caption)},
+            {str_title: wandb.Image(to_pil_image(grid), caption=caption)},
             commit=False,
         )
 
@@ -157,7 +155,7 @@ class ImagesToLogger(pl.Callback):
             or (stage == Stage.fit and batch_idx % 100 == 0)
         ):
             image_batch = batch.x.to(pl_module.device)
-            self.make_grid_and_log("original", self.denorm(image_batch), pl_module, stage, trainer)
+            self.make_grid_and_log("original", image_batch, pl_module, stage, trainer)
             with torch.no_grad():
                 _, debiased = pl_module(image_batch)
             self.make_grid_and_log(

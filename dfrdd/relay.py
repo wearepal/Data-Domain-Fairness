@@ -86,7 +86,7 @@ class DfddRelay(Relay):
         self.log(f"Current working directory: '{os.getcwd()}'")
         pl.seed_everything(self.seed, workers=True)
 
-        dm: cdt.data.datamodules.CdtVisionDataModule = instantiate(self.data)
+        dm: conduit.data.datamodules.CdtVisionDataModule = instantiate(self.data)
         dm.prepare_data()
         dm.setup()
 

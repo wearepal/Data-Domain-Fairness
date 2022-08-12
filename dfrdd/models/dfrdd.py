@@ -67,8 +67,7 @@ class Frdd(pl.LightningModule):
         self.lr_sched_freq = lr_sched_freq
         self.image_size = image_size
         self.denormalizer = Denormalize(
-            mean=np.multiply(IMAGENET_STATS.mean, 255),
-            std=np.multiply(IMAGENET_STATS.std, 255),
+            mean=IMAGENET_STATS.mean, std=IMAGENET_STATS.std
         )
 
         self.enc_out_dim = 512  # set according to the out_channel count of encoder used (512 for resnet18, 2048 for resnet50)
@@ -161,7 +160,7 @@ class Frdd(pl.LightningModule):
         # vgg: VggOut = self.vgg(batch.x)
         # debiased_vgg: VggOut = self.vgg(debiased_x_hat)
 
-        recon_loss = self.loss_fn(debiased_x_hat, self.denormalizer(batch.x).detach())
+        recon_loss = self.loss_fn(debiased_x_hat, batch.x.detach())
         # y_hat = self.fc_layer(debiased_vgg.pool5)
         # pred_loss = self.pred_loss_fn(y_hat, batch.y)
 
