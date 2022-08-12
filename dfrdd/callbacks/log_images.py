@@ -122,7 +122,7 @@ class ImagesToLogger(pl.Callback):
         trainer: pl.Trainer,
         normalize: bool = False,
     ) -> None:
-        img = self.denorm(img).clip(0, 1)
+        # img = self.denorm(img).clip(0, 1)
         if len(img.size()) == 2:
             img_dim = pl_module.img_dim
             img = img.view(self.num_samples, *img_dim)
@@ -157,7 +157,7 @@ class ImagesToLogger(pl.Callback):
             or (stage == Stage.fit and batch_idx % 100 == 0)
         ):
             image_batch = batch.x.to(pl_module.device)
-            self.make_grid_and_log("original", image_batch, pl_module, stage, trainer)
+            self.make_grid_and_log("original", self.denorm(image_batch), pl_module, stage, trainer)
             with torch.no_grad():
                 _, debiased = pl_module(image_batch)
             self.make_grid_and_log(
