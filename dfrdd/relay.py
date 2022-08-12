@@ -120,7 +120,7 @@ class DfddRelay(Relay):
 
         trainer.fit(
             model=model,
-            train_dataloaders=dm.train_dataloader(shuffle=True, drop_last=True),
+            train_dataloaders=dm.train_dataloader(shuffle=False, drop_last=True),
             val_dataloaders=dm.val_dataloader(),
         )
 

@@ -242,14 +242,14 @@ class Frdd(pl.LightningModule):
     def configure_optimizers(
         self,
     ) -> Mapping[str, Union[LRScheduler, int, TrainingMode]]:
-        opt = torch.optim.AdamW(
+        return torch.optim.AdamW(
             params=self.parameters(),
             lr=self.lr,
             weight_decay=self.weight_decay,
         )
-        return {
-            "optimizer": opt,
-            "scheduler": CosineAnnealingLR(optimizer=opt, T_max=20_000),
-            "interval": self.lr_sched_interval.name,
-            "frequency": self.lr_sched_freq,
-        }
+        # return {
+        #     "optimizer": opt,
+        #     "scheduler": CosineAnnealingLR(optimizer=opt, T_max=20_000),
+        #     "interval": self.lr_sched_interval.name,
+        #     "frequency": self.lr_sched_freq,
+        # }
