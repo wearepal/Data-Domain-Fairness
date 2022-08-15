@@ -15,10 +15,10 @@ from torch import nn
 __all__ = ["Frdd"]
 
 import pytorch_lightning as pl
-from torch.optim.lr_scheduler import CosineAnnealingLR
+from torch.optim.lr_scheduler import CosineAnnealingLR, CosineAnnealingWarmRestarts
 from torchmetrics import MeanAbsoluteError
 
-from dfrdd.common import MAE, REC_LOSS, TO_MIN, FairnessType, PRED_LOSS, TV_LOSS
+from dfrdd.common import MAE, REC_LOSS, TO_MIN, FairnessType, PRED_LOSS, TV_LOSS, MMD_LOSS
 from dfrdd.components.hsic import hsic, kernel_matrix
 from dfrdd.models.vgg import VggOut, VGG
 
@@ -163,9 +163,9 @@ class Frdd(pl.LightningModule):
         y_hat = self.fc_layer(debiased_vgg.pool5)
         pred_loss = self.pred_loss_fn(y_hat, batch.y)
 
-        # biased_decomp_loss, debiased_decomp_loss = self.decomposition_loss(
-        #     batch, vgg, debiased_vgg, recon_loss
-        # )
+        biased_decomp_loss, debiased_decomp_loss = self.decomposition_loss(
+            batch, vgg, debiased_vgg, recon_loss
+        )
 
         tv_loss = self.tv_loss(debiased_x_hat).mean() * 1e-8
 
@@ -185,7 +185,7 @@ class Frdd(pl.LightningModule):
             self.denormalizer(batch.x.detach()),
         )
         # if self.current_epoch < 10:
-        total_loss = recon_loss
+        total_loss = recon_loss + pred_loss + tv_loss
         # else:
         #     total_loss = (
         #         recon_loss
@@ -195,8 +195,8 @@ class Frdd(pl.LightningModule):
             total_loss,
             {
                 f"{TO_MIN}": total_loss.detach(),
-                # f"{MMD_LOSS}_biased": biased_decomp_loss,
-                # f"{MMD_LOSS}_debiased": debiased_decomp_loss,
+                f"{MMD_LOSS}_biased": biased_decomp_loss,
+                f"{MMD_LOSS}_debiased": debiased_decomp_loss,
                 f"{REC_LOSS}": recon_loss.detach(),
                 f"{MAE}": mae.detach(),
                 f"{PRED_LOSS}": pred_loss,
@@ -244,14 +244,22 @@ class Frdd(pl.LightningModule):
     def configure_optimizers(
         self,
     ) -> Mapping[str, Union[LRScheduler, int, TrainingMode]]:
-        return torch.optim.AdamW(
-            params=list(self.encoder.parameters()) + list(self.decoder.parameters()) + list(self.fc_layer.parameters()),
+        opt = torch.optim.AdamW(
+            params=list(self.encoder.parameters())
+            + list(self.decoder.parameters())
+            + list(self.fc_layer.parameters()),
             lr=self.lr,
             weight_decay=self.weight_decay,
         )
-        # return {
-        #     "optimizer": opt,
-        #     "scheduler": CosineAnnealingLR(optimizer=opt, T_max=20_000),
-        #     "interval": self.lr_sched_interval.name,
-        #     "frequency": self.lr_sched_freq,
-        # }
+        return {
+            "optimizer": opt,
+            "scheduler": CosineAnnealingWarmRestarts(
+                T_0=self.lr_initial_restart,
+                T_mult=self.lr_restart_mult,
+                eta_min=1e-12,
+                last_epoch=-1,
+                optimizer=opt,
+            ),
+            "interval": self.lr_sched_interval.name,
+            "frequency": self.lr_sched_freq,
+        }
