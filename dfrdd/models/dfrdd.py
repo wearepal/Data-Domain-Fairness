@@ -18,7 +18,15 @@ import pytorch_lightning as pl
 from torch.optim.lr_scheduler import CosineAnnealingLR, CosineAnnealingWarmRestarts
 from torchmetrics import MeanAbsoluteError
 
-from dfrdd.common import MAE, REC_LOSS, TO_MIN, FairnessType, PRED_LOSS, TV_LOSS, MMD_LOSS
+from dfrdd.common import (
+    MAE,
+    REC_LOSS,
+    TO_MIN,
+    FairnessType,
+    PRED_LOSS,
+    TV_LOSS,
+    MMD_LOSS,
+)
 from dfrdd.components.hsic import hsic, kernel_matrix
 from dfrdd.models.vgg import VggOut, VGG
 
@@ -184,13 +192,9 @@ class Frdd(pl.LightningModule):
             self.denormalizer(debiased_x_hat.detach()),
             self.denormalizer(batch.x.detach()),
         )
-        # if self.current_epoch < 10:
-        total_loss = recon_loss + pred_loss + tv_loss
-        # else:
-        #     total_loss = (
-        #         recon_loss
-        #         + pred_loss  # + biased_decomp_loss + debiased_decomp_loss + tv_loss
-        #     )
+        total_loss = (
+            recon_loss + pred_loss + biased_decomp_loss + debiased_decomp_loss + tv_loss
+        )
         return (
             total_loss,
             {
