@@ -245,7 +245,7 @@ class Frdd(pl.LightningModule):
         self,
     ) -> Mapping[str, Union[LRScheduler, int, TrainingMode]]:
         return torch.optim.AdamW(
-            params=list(self.encoder.parameters()) + list(self.decoder.parameters() + list(self.fc_layer.parameters())),
+            params=list(self.encoder.parameters()) + list(self.decoder.parameters()) + list(self.fc_layer.parameters()),
             lr=self.lr,
             weight_decay=self.weight_decay,
         )
