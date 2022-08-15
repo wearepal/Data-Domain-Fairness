@@ -18,7 +18,7 @@ import pytorch_lightning as pl
 from torch.optim.lr_scheduler import CosineAnnealingLR
 from torchmetrics import MeanAbsoluteError
 
-from dfrdd.common import MAE, REC_LOSS, TO_MIN, FairnessType
+from dfrdd.common import MAE, REC_LOSS, TO_MIN, FairnessType, PRED_LOSS, TV_LOSS
 from dfrdd.components.hsic import hsic, kernel_matrix
 from dfrdd.models.vgg import VggOut, VGG
 
@@ -160,14 +160,14 @@ class Frdd(pl.LightningModule):
         debiased_vgg: VggOut = self.vgg(debiased_x_hat)
 
         recon_loss = self.loss_fn(debiased_x_hat, batch.x)
-        # y_hat = self.fc_layer(debiased_vgg.pool5)
-        # pred_loss = self.pred_loss_fn(y_hat, batch.y)
+        y_hat = self.fc_layer(debiased_vgg.pool5)
+        pred_loss = self.pred_loss_fn(y_hat, batch.y)
 
         # biased_decomp_loss, debiased_decomp_loss = self.decomposition_loss(
         #     batch, vgg, debiased_vgg, recon_loss
         # )
 
-        # tv_loss = self.tv_loss(debiased_x_hat).mean() * 1e-8
+        tv_loss = self.tv_loss(debiased_x_hat).mean() * 1e-8
 
         mae = self.maes[f"{stage}"]
         # self.print(
@@ -199,8 +199,8 @@ class Frdd(pl.LightningModule):
                 # f"{MMD_LOSS}_debiased": debiased_decomp_loss,
                 f"{REC_LOSS}": recon_loss.detach(),
                 f"{MAE}": mae.detach(),
-                # f"{PRED_LOSS}": pred_loss,
-                # f"{TV_LOSS}": tv_loss,
+                f"{PRED_LOSS}": pred_loss,
+                f"{TV_LOSS}": tv_loss,
             },
             z.detach(),
         )
