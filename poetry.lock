@@ -1112,7 +1112,7 @@ typing-extensions = "*"
 
 [[package]]
 name = "torch-conduit"
-version = "0.1.4"
+version = "0.1.6"
 description = "Lightweight framework for channeling the power of PyTorch Lightning"
 category = "main"
 optional = false
@@ -1314,7 +1314,7 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytest-
 [metadata]
 lock-version = "1.1"
 python-versions = "3.9"
-content-hash = "1b6dd4637891aee6d960d38ce39937b4c2fb96fbdf67fb0e18eed12e76233c9b"
+content-hash = "5fa5207a2588eeb3f6b1407bcec6f26ec119f38faa892b84d5bd872ca5508575"
 
 [metadata.files]
 absl-py = []

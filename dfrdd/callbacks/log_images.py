@@ -157,7 +157,9 @@ class ImagesToLogger(pl.Callback):
             or (stage == Stage.fit and batch_idx % 100 == 0)
         ):
             image_batch = batch.x.to(pl_module.device)
-            self.make_grid_and_log("original", self.denorm(image_batch), pl_module, stage, trainer)
+            self.make_grid_and_log(
+                "original", self.denorm(image_batch), pl_module, stage, trainer
+            )
             with torch.no_grad():
                 _, debiased = pl_module(image_batch)
             self.make_grid_and_log(

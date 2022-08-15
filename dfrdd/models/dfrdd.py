@@ -96,15 +96,13 @@ class Frdd(pl.LightningModule):
         self.pred_loss_fn = nn.CrossEntropyLoss(reduction="mean")
         self.tv_loss = TotalVariation()
 
-        self.decoder = nn.Sequential(
-            resnet18_decoder(
-                latent_dim=self.latent_dim,
-                input_height=self.image_size,
-                first_conv=self.first_conv,
-                maxpool1=self.max_pool1,
-            ),
-            nn.Sigmoid(),
+        self.decoder = resnet18_decoder(
+            latent_dim=self.latent_dim,
+            input_height=self.image_size,
+            first_conv=self.first_conv,
+            maxpool1=self.max_pool1,
         )
+
         self.card_s = card_s
         self.card_y = card_y
 
@@ -161,7 +159,7 @@ class Frdd(pl.LightningModule):
         # vgg: VggOut = self.vgg(batch.x)
         # debiased_vgg: VggOut = self.vgg(debiased_x_hat)
 
-        recon_loss = self.loss_fn(debiased_x_hat, self.denormalizer(batch.x).detach())
+        recon_loss = self.loss_fn(debiased_x_hat, batch.x)
         # y_hat = self.fc_layer(debiased_vgg.pool5)
         # pred_loss = self.pred_loss_fn(y_hat, batch.y)
 
@@ -183,7 +181,8 @@ class Frdd(pl.LightningModule):
         #     f"denorm(x) max: {self.denormalizer(batch.x).max().item()}",
         # )
         mae = mae(
-            self.denormalizer(debiased_x_hat.detach()), self.denormalizer(batch.x.detach())
+            self.denormalizer(debiased_x_hat.detach()),
+            self.denormalizer(batch.x.detach()),
         )
         # if self.current_epoch < 10:
         total_loss = recon_loss
