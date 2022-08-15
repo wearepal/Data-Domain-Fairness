@@ -20,7 +20,7 @@ from torchmetrics import MeanAbsoluteError
 
 from dfrdd.common import MAE, REC_LOSS, TO_MIN, FairnessType
 from dfrdd.components.hsic import hsic, kernel_matrix
-from dfrdd.models.vgg import VggOut
+from dfrdd.models.vgg import VggOut, VGG
 
 IMAGE_FEATS_SIG = 1.0
 SENS_FEATS_SIG = 0.5
@@ -86,8 +86,8 @@ class Frdd(pl.LightningModule):
             "block4_conv1": 20,
             "block5_conv1": 29,
         }
-        # self.vgg = VGG(self.output_layers)
-        # self.vgg.requires_grad_(False)
+        self.vgg = VGG(self.output_layers)
+        self.vgg.requires_grad_(False)
         self.encoder = nn.Sequential(
             resnet18_encoder(first_conv=self.first_conv, maxpool1=self.max_pool1),
             nn.Linear(self.enc_out_dim, self.latent_dim),
@@ -106,7 +106,7 @@ class Frdd(pl.LightningModule):
         self.card_s = card_s
         self.card_y = card_y
 
-        # self.fc_layer = nn.Linear(self.vgg.model.classifier[0].in_features, self.card_y)
+        self.fc_layer = nn.Linear(self.vgg.model.classifier[0].in_features, self.card_y)
 
     def decomposition_loss(
         self,
@@ -156,8 +156,8 @@ class Frdd(pl.LightningModule):
         z = self.encoder(batch.x)
         debiased_x_hat = self.decoder(z)
 
-        # vgg: VggOut = self.vgg(batch.x)
-        # debiased_vgg: VggOut = self.vgg(debiased_x_hat)
+        vgg: VggOut = self.vgg(batch.x)
+        debiased_vgg: VggOut = self.vgg(debiased_x_hat)
 
         recon_loss = self.loss_fn(debiased_x_hat, batch.x)
         # y_hat = self.fc_layer(debiased_vgg.pool5)
@@ -245,7 +245,7 @@ class Frdd(pl.LightningModule):
         self,
     ) -> Mapping[str, Union[LRScheduler, int, TrainingMode]]:
         return torch.optim.AdamW(
-            params=self.parameters(),
+            params=list(self.encoder.parameters()) + list(self.decoder.parameters() + list(self.fc_layer.parameters())),
             lr=self.lr,
             weight_decay=self.weight_decay,
         )
